@@ -1,0 +1,7 @@
+<routes>
+    <!-- Alternate Peak Hour Flows -->
+    <flow id="peak_n2s" route="N2S" begin="0" end="1800" period="4" type="passenger_gasoline"/>
+    <flow id="peak_s2n" route="S2N" begin="0" end="1800" period="5" type="passenger_electric"/>
+    <flow id="peak_e2w" route="E2W" begin="0" end="1800" period="4" type="passenger_diesel"/>
+    <flow id="peak_w2e" route="W2E" begin="0" end="1800" period="6" type="truck_diesel"/>
+</routes>

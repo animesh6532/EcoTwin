@@ -1,0 +1,13 @@
+<routes version="1.16" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <!-- Routes -->
+    <route id="N2S" edges="N2C C2S"/>
+    <route id="S2N" edges="S2C C2N"/>
+    <route id="E2W" edges="E2C C2W"/>
+    <route id="W2E" edges="W2C C2E"/>
+    
+    <!-- Flow configurations -->
+    <flow id="flow_n2s" route="N2S" begin="0" end="3600" period="10" type="passenger_gasoline"/>
+    <flow id="flow_s2n" route="S2N" begin="0" end="3600" period="10" type="passenger_electric"/>
+    <flow id="flow_e2w" route="E2W" begin="0" end="3600" period="12" type="passenger_diesel"/>
+    <flow id="flow_w2e" route="W2E" begin="0" end="3600" period="15" type="truck_diesel"/>
+</routes>

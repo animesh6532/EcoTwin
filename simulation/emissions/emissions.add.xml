@@ -1,0 +1,5 @@
+<additional>
+    <!-- Edge/Lane emission output settings -->
+    <edgeData id="edge_emissions" file="../../data/emissions/edge_emissions.xml" freq="60"/>
+    <laneData id="lane_emissions" file="../../data/emissions/lane_emissions.xml" freq="60"/>
+</additional>
