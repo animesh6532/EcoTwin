@@ -1,0 +1,21 @@
+# Web Server
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+websockets>=11.0.3
+pydantic>=2.0
+pydantic-settings>=2.0
+
+# Reinforcement Learning
+gymnasium>=0.28.1
+stable-baselines3>=2.0.0
+numpy>=1.24.3
+pandas>=2.0.0
+
+# SUMO Client
+traci>=1.18.0
+
+# Testing & Quality
+pytest>=7.3.1
+black>=23.3.0
+ruff>=0.0.272
+httpx>=0.24.1

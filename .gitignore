@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv
+venv/
+ENV/
+env/
+pyvenv.cfg
+.env
+.env.*
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.vite/
+
+# SUMO & Simulation Output
+*.sbx
+*.net.xml.bak
+*.rou.xml.bak
+*.add.xml.bak
+*.sumocfg.bak
+simulation/output/
+data/simulation_runs/*
+data/emissions/*
+!data/simulation_runs/.gitkeep
+!data/emissions/.gitkeep
+
+# RL Models & Checkpoints
+models/ppo/checkpoints/*
+models/ppo/best_model/*
+!models/ppo/checkpoints/.gitkeep
+!models/ppo/best_model/.gitkeep
+*.zip
+*.pkl
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Jupyter Notebooks
+.ipynb_checkpoints
