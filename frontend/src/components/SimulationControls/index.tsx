@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Play, Pause, SkipForward } from 'lucide-react';
 
 interface ControlsProps {

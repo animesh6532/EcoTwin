@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSimulationState } from '../../store/simulationStore';
 
 export default function TrafficLights() {

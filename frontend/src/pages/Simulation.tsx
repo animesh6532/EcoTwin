@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useSimulationState } from '../store/simulationStore';
 import { useSimulation } from '../hooks/useSimulation';
 import CityMap from '../components/CityMap';

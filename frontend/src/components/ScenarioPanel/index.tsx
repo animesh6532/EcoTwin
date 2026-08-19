@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface ScenarioPanelProps {
   currentScenario: string;
   onSelect: (scenario: string) => void;
