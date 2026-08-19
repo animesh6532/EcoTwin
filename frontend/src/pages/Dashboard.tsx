@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSimulationState } from '../store/simulationStore';
 import { formatEmissions, formatFuel } from '../utils/formatters';
 import { Activity, AlertTriangle, Cpu, Droplet, ShieldAlert } from 'lucide-react';

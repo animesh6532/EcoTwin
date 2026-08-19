@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function ComparisonPanel() {
   const metrics = [
     { mode: 'Fixed-Time', co2: '45.8 kg', delay: '42.4s', rating: '60%' },

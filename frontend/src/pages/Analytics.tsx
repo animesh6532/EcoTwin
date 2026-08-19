@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSimulationState } from '../store/simulationStore';
 import { formatEmissions } from '../utils/formatters';
 import { Activity, BarChart2, TrendingDown } from 'lucide-react';

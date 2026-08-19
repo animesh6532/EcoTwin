@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { configureOptimization, fetchOptimizationStatus } from '../services/api';
 import { Cpu, ShieldCheck, Shuffle } from 'lucide-react';
 

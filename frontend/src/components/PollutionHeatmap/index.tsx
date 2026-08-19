@@ -1,4 +1,3 @@
-import React from 'react';
 import { useSimulationState } from '../../store/simulationStore';
 import { AlertCircle } from 'lucide-react';
 
@@ -6,7 +5,6 @@ export default function PollutionHeatmap() {
   const simState = useSimulationState();
   
   // Calculate relative hotspot counts
-  const totalCo2 = simState.emissions.co2;
   const hotspotCount = simState.vehicles.filter(v => v.waiting_time > 60).length;
 
   return (
