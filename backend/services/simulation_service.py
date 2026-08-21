@@ -1,70 +1,99 @@
 import asyncio
+from datetime import datetime
 from typing import Dict, Any
 from backend.core.logging import logger
-from backend.simulation.simulation_controller import simulation_controller
-from backend.simulation.traffic_state import TrafficState
-from backend.simulation.traffic_lights import TrafficLightsManager
-from backend.simulation.emission_collector import EmissionCollector
-from backend.api.schemas import SimulationConfig
-from backend.api.websocket import manager
+from backend.simulation.manager import simulation_manager
+from backend.simulation.vehicle_service import vehicle_service
+from backend.simulation.emission_service import emission_service
+from backend.simulation.traffic_light_controller import TrafficLightController
+from backend.models.schemas import SimulationConfig
+from backend.websocket.manager import manager
 
 class SimulationService:
     def __init__(self):
         self.config = None
-        simulation_controller.register_step_callback(self._on_step_callback)
+        simulation_manager.register_step_callback(self._on_step_callback)
 
     def start(self, config: SimulationConfig) -> bool:
         self.config = config
-        return simulation_controller.start(config)
+        return simulation_manager.start(config)
 
     def pause(self):
-        simulation_controller.pause()
+        simulation_manager.pause()
 
     def resume(self):
-        simulation_controller.resume()
+        simulation_manager.resume()
 
     def step(self):
-        simulation_controller.step()
+        simulation_manager.step()
 
     def stop(self):
-        simulation_controller.stop()
+        simulation_manager.stop()
 
     def is_running(self) -> bool:
-        return simulation_controller.running
+        return simulation_manager.running
 
     def get_state(self) -> Dict[str, Any]:
-        vehicles = TrafficState.get_active_vehicles() if self.is_running() else []
+        status_info = simulation_manager.get_status()
         return {
-            "status": "running" if self.is_running() else "stopped",
-            "step": simulation_controller.step_count,
-            "active_vehicles": len(vehicles),
-            "completed_vehicles": 0,  # SUMO tracks departed/arrived
-            "running": self.is_running()
+            "status": "running" if status_info["running"] else "stopped",
+            "step": simulation_manager.step_count,
+            "active_vehicles": status_info["vehicle_count"],
+            "completed_vehicles": 0,
+            "running": status_info["running"],
+            "paused": status_info["paused"],
+            "controller": status_info["controller"],
+            "session_id": status_info["session_id"]
         }
 
     def _on_step_callback(self, step_number: int):
-        # Gather live features
-        vehicles = TrafficState.get_active_vehicles()
-        tls_ids = TrafficLightsManager.get_tls_ids()
-        signals = {tls_id: TrafficLightsManager.get_state(tls_id) for tls_id in tls_ids}
-        emissions = EmissionCollector.get_system_emissions()
+        # Gather live states from services
+        vehicles = vehicle_service.get_all_vehicles()
+        v_summary = vehicle_service.get_summary()
         
-        # Structure broadcast frame
+        # Query traffic lights
+        tls_ids = TrafficLightController.discover_tls_ids()
+        traffic_lights = []
+        for t_id in tls_ids:
+            phase = TrafficLightController.get_current_phase(t_id)
+            # Default phases defined by SUMO logic
+            traffic_lights.append({
+                "id": t_id,
+                "active_phase": phase,
+                "phases": ["GGGggrrrrrGGGggrrrrr", "yyyyyrrrrryyyyyrrrrr", "rrrrrGGGggrrrrrGGGgg", "rrrrryyyyyrrrrryyyyy"]
+            })
+            
+        e_current = emission_service.get_current_metrics()
+        
+        # Compile pollution grid aggregation hotspots
+        pollution_grid = emission_service.get_pollution_grid()
+        pollution_payload = [
+            {"x": cell.x, "y": cell.y, "intensity": cell.intensity, "co2": cell.co2, "vehicles": cell.vehicles}
+            for cell in pollution_grid
+        ]
+        
+        # Structure payload frame
         payload = {
-            "type": "state_update",
-            "step": step_number,
+            "type": "simulation_state",
+            "timestamp": datetime.utcnow().isoformat(),
+            "simulation_time": step_number * simulation_manager.step_length,
             "vehicles": vehicles,
-            "signals": signals,
-            "emissions": emissions
+            "traffic_lights": traffic_lights,
+            "metrics": {
+                "vehicle_count": v_summary["total_vehicles"],
+                "average_speed": v_summary["average_speed"],
+                "average_waiting_time": v_summary["average_waiting_time"],
+                "total_co2": e_current.co2
+            },
+            "pollution": pollution_payload
         }
         
-        # Schedule websocket broadcast on the event loop safely
+        # Dispatch to all WebSocket listeners safely on active loop
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
                 loop.create_task(manager.broadcast(payload))
         except RuntimeError:
-            # Occurs if we're not inside an active event loop
             pass
 
 simulation_service = SimulationService()

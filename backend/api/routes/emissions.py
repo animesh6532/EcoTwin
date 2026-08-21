@@ -1,13 +1,34 @@
-from fastapi import APIRouter, HTTPException
-from backend.api.schemas import EmissionsResponse
-from backend.services.analytics_service import analytics_service
+from fastapi import APIRouter
+from typing import List
+from backend.models.schemas import EmissionMetrics, PollutionCell, EmissionsResponse
+from backend.simulation.emission_service import emission_service
 
 router = APIRouter()
 
-@router.get("/metrics", response_model=EmissionsResponse)
-def get_emissions_metrics():
-    try:
-        metrics = analytics_service.get_current_emissions_metrics()
-        return metrics
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/current", response_model=EmissionMetrics)
+def get_current_emissions():
+    """
+    Returns instantaneous emissions in mg/s or ml/s for active step.
+    """
+    return emission_service.get_current_metrics()
+
+@router.get("/history", response_model=EmissionMetrics)
+def get_accumulated_emissions():
+    """
+    Returns total accumulated emissions over the active simulation session.
+    """
+    return emission_service.get_accumulated_metrics()
+
+@router.get("/hotspots", response_model=List[str])
+def get_emission_hotspots():
+    """
+    List of lane IDs exceeding safe emission thresholds.
+    """
+    return emission_service.get_hotspots()
+
+@router.get("/summary", response_model=List[PollutionCell])
+def get_emissions_summary():
+    """
+    Returns spatial pollution grid cells for rendering hotspots in Deck.gl/Leaflet.
+    """
+    return emission_service.get_pollution_grid()
