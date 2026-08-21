@@ -24,7 +24,7 @@ class MetricsService:
             "vehicle_count": v_metrics["total_vehicles"],
             "average_speed": v_metrics["average_speed"],
             "average_waiting_time": v_metrics["average_waiting_time"],
-            "total_co2": e_current_co2 := e_metrics.co2,
+            "total_co2": e_metrics.co2,
             "total_nox": e_metrics.nox,
             "total_fuel": e_metrics.fuel,
             "reward": float(simulation_manager.last_reward),

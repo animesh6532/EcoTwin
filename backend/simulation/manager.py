@@ -2,6 +2,7 @@ import threading
 import time
 import uuid
 import asyncio
+import traci
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from backend.core.logging import logger
@@ -76,7 +77,7 @@ class SimulationManager:
             vehicle_service.reset()
             
             self.running = True
-            self.paused = False
+            self.paused = True
             
             # Start loop worker thread
             self._thread = threading.Thread(target=self._run_loop, daemon=True)
