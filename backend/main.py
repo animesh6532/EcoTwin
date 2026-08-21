@@ -2,42 +2,36 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
-from backend.core.logging import logger
-from backend.api.routes import health, simulation, traffic, emissions, optimization
-from backend.api.websocket import websocket_endpoint
+from backend.api.router import api_router
+from backend.websocket.simulation_stream import websocket_endpoint
+from backend.core.lifecycle import register_app_lifecycle_events
 
 app = FastAPI(
-    title="EcoTwin API",
-    description="Digital Twin Platform for Traffic Control and Urban Carbon Dispersal",
+    title="EcoTwin API Backend",
+    description="Intelligent Traffic Optimization and Environmental Analysis Platform",
     version="1.0.0",
 )
 
-# CORS configuration
+# CORS Configuration
+# frontend URL configured in settings
+cors_origins = [settings.FRONTEND_URL, "http://localhost:3000"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Register routes
-app.include_router(health.router, prefix="/api/health", tags=["Health"])
-app.include_router(simulation.router, prefix="/api/simulation", tags=["Simulation"])
-app.include_router(traffic.router, prefix="/api/traffic", tags=["Traffic"])
-app.include_router(emissions.router, prefix="/api/emissions", tags=["Emissions"])
-app.include_router(optimization.router, prefix="/api/optimization", tags=["Optimization"])
+# Register central routers
+app.include_router(api_router, prefix="/api/v1")
 
-# Register WebSocket endpoint
-app.add_api_websocket_route("/ws", websocket_endpoint)
+# Register live WebSockets streaming state endpoint
+app.add_api_websocket_route("/ws/simulation", websocket_endpoint)
 
-@app.on_event("startup")
-async def startup_event():
-    logger.info("EcoTwin Backend starting up...")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("EcoTwin Backend shutting down...")
+# Register App Lifecycle handlers (Startup schemas, shutdown cleanups)
+register_app_lifecycle_events(app)
 
 if __name__ == "__main__":
     uvicorn.run(
