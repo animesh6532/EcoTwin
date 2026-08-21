@@ -2,7 +2,7 @@
     <input>
         <net-file value="../network/city.net.xml"/>
         <route-files value="../routes/traffic.rou.xml"/>
-        <additional-files value="../routes/vehicles.add.xml,../traffic_lights/tls.add.xml,../emissions/emissions.add.xml"/>
+        <additional-files value="../routes/vehicles.add.xml,../emissions/emissions.add.xml"/>
     </input>
     <time>
         <begin value="0"/>

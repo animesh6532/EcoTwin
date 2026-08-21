@@ -853,7 +853,7 @@ model = PPO(
 model.learn(total_timesteps=2000)
 
 # Save best model
-model.save("../models/ppo/best_model")
+model.save("../models/ppo/best_model.zip")
 env.close()
 print("PPO training completed and model saved successfully.")
 """)
@@ -888,7 +888,7 @@ from backend.simulation.emission_collector import EmissionCollector
     "max_steps": 1000
 })
 
-model = PPO.load("../models/ppo/best_model")
+model = PPO.load("../models/ppo/best_model.zip")
 
 obs, info = env.reset()
 done = False
