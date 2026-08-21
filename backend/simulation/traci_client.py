@@ -85,6 +85,27 @@ class EcoTwinTraCI:
             "--quit-on-end",
         ]
 
+    def connect(self, binary, config_path, step_length, label="default"):
+        """Connect to SUMO simulation using specified config and step length."""
+        if self.connected:
+            return
+        self.sumo_binary = Path(binary)
+        self.sumo_cmd = [
+            str(self.sumo_binary),
+            "-c",
+            str(config_path),
+            "--step-length",
+            str(step_length),
+            "--start",
+            "--quit-on-end",
+        ]
+        traci.start(self.sumo_cmd, label=label)
+        self.connected = True
+
+    def step(self):
+        """Advance the simulation by one step."""
+        self.simulation_step()
+
     # --------------------------------------------------------
     # Start SUMO
     # --------------------------------------------------------
@@ -355,6 +376,9 @@ def main():
     finally:
 
         client.close()
+
+
+traci_client = EcoTwinTraCI(gui=False)
 
 
 if __name__ == "__main__":
