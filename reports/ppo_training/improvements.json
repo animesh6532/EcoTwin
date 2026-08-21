@@ -1,18 +1,18 @@
 {
     "ppo_metrics": {
-        "total_co2_mg": 343028501.2042718,
-        "average_co2_mg_s": 343028.5012042718,
-        "total_nox_mg": 2422250.901759791,
-        "total_fuel_ml": 108940771.35213982,
-        "average_waiting_time_s": 90.68221327041992,
-        "average_speed_kmh": 14.595950978547958
+        "total_co2_mg": 542580224.2693118,
+        "average_co2_mg_s": 542580.2242693118,
+        "total_nox_mg": 2562288.1021477506,
+        "total_fuel_ml": 178457228.52703708,
+        "average_waiting_time_s": 100.11088408105768,
+        "average_speed_kmh": 6.747392997563874
     },
     "improvements": {
-        "total_co2_mg": -153.58869121935754,
-        "average_co2_mg_s": -153.58869120801467,
-        "total_nox_mg": -299.1442065470161,
-        "total_fuel_ml": -148.0802992402866,
-        "average_waiting_time_s": -7603.968051012845,
-        "average_speed_kmh": -63.728895911908026
+        "total_co2_mg": -301.11013653650696,
+        "average_co2_mg_s": -301.11013651426924,
+        "total_nox_mg": -322.21986613086784,
+        "total_fuel_ml": -306.38341463063637,
+        "average_waiting_time_s": -8404.986994627176,
+        "average_speed_kmh": -83.23263834367349
     }
 }
