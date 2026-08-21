@@ -1,5 +1,5 @@
 import traci
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from backend.core.logging import logger
 
 class VehicleService:

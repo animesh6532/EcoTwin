@@ -1,6 +1,7 @@
 import os
 import traci
 from fastapi import APIRouter, status, HTTPException
+from sqlalchemy import text
 from backend.core.config import settings
 from backend.core.database import SessionLocal
 from backend.simulation.manager import simulation_manager
@@ -17,7 +18,7 @@ def health_check():
     db = SessionLocal()
     try:
         # Simple query to verify DB connection
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
     except Exception:
         db_status = "unavailable"
     finally:
