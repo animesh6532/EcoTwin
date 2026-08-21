@@ -1,94 +1,172 @@
-import { useSimulationState } from '../store/simulationStore';
-import { formatEmissions } from '../utils/formatters';
-import { Activity, BarChart2, TrendingDown } from 'lucide-react';
+import { useQuery } from "@tanstack/react-query";
+import { useSimulationStore } from "../store/simulationStore";
+import { getHistoricalMetrics } from "../api/metrics";
+import { useState, useEffect } from "react";
+import { 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  Tooltip,
+  CartesianGrid
+} from "recharts";
+import { BarChart3, AlertTriangle, ShieldCheck } from "lucide-react";
 
 export default function Analytics() {
-  const simState = useSimulationState();
+  const wsState = useSimulationStore();
+  
+  // State for session ID query
+  const [querySessionId, setQuerySessionId] = useState(wsState.sessionId || "");
+
+  // Auto-sync with active session ID
+  useEffect(() => {
+    if (wsState.sessionId) {
+      setQuerySessionId(wsState.sessionId);
+    }
+  }, [wsState.sessionId]);
+
+  // Query history
+  const { data: metricsHistory, isLoading, error, refetch } = useQuery({
+    queryKey: ["metricsHistory", querySessionId],
+    queryFn: () => getHistoricalMetrics(querySessionId),
+    enabled: !!querySessionId,
+    refetchInterval: wsState.running && !wsState.paused ? 5000 : false, // Poll when running
+  });
+
+  const handleQuerySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (querySessionId.trim()) {
+      refetch();
+    }
+  };
+
+  // Render chart helper
+  const renderAnalyticsChart = (
+    title: string, 
+    dataKey: keyof any, 
+    color: string, 
+    unit: string, 
+    scaleDivider = 1
+  ) => {
+    if (isLoading) {
+      return <div className="h-48 bg-bg-secondary rounded animate-pulse" />;
+    }
+
+    if (error || !metricsHistory || metricsHistory.length === 0) {
+      return (
+        <div className="h-48 flex items-center justify-center text-xs text-text-muted border border-dashed border-border rounded-lg">
+          No metrics history available.
+        </div>
+      );
+    }
+
+    // Map data and scale if necessary
+    const chartData = metricsHistory.map((item: any) => ({
+      step: `Step ${item.step}`,
+      val: item[dataKey] / scaleDivider,
+    }));
+
+    return (
+      <div className="bg-white border border-border rounded-xl p-4 shadow-sm space-y-3">
+        <div className="flex justify-between items-center text-text-secondary border-b border-border pb-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">{title}</span>
+          <span className="text-[10px] font-mono">{unit}</span>
+        </div>
+        
+        <div className="h-44">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+              <XAxis dataKey="step" stroke="#94A3B8" fontSize={9} tickLine={false} />
+              <YAxis stroke="#94A3B8" fontSize={9} tickLine={false} />
+              <Tooltip 
+                contentStyle={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "8px", fontSize: 10 }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="val" 
+                stroke={color} 
+                fill={color} 
+                fillOpacity={0.06} 
+                strokeWidth={1.5} 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-      <div>
-        <h1 style={{ fontSize: '32px', fontWeight: 700, marginBottom: '8px' }}>Emissions &amp; Analytics</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Detailed pollutant dispersion heatmaps and training performance logs.</p>
-      </div>
-
-      {/* Analytics KPI header */}
-      <div className="metrics-grid">
-        <div className="glass-panel metric-card">
-          <span className="metric-title">Instant CO₂ rate</span>
-          <span className="metric-value">{formatEmissions(simState.emissions.co2)}</span>
-        </div>
-        <div className="glass-panel metric-card">
-          <span className="metric-title">Average NOx rate</span>
-          <span className="metric-value">{formatEmissions(simState.emissions.nox)}</span>
-        </div>
-        <div className="glass-panel metric-card">
-          <span className="metric-title">Average PM2.5 rate</span>
-          <span className="metric-value">{formatEmissions(simState.emissions.pm25)}</span>
-        </div>
-      </div>
-
-      {/* Main visual comparison curves */}
-      <div className="chart-grid">
-        {/* Plot 1: Hotspot Heatmap */}
-        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600 }}>CO₂ Dispersion Heatmap</h2>
-            <Activity size={20} color="var(--accent-cyan)" />
-          </div>
-          <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', height: '320px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/outputs/figures/co2_heatmap.png" alt="Carbon Dispersion Heatmap" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'cover' }} />
-          </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Calculated concentration model illustrating carbon emissions surrounding intersection hubs.</p>
+    <div className="space-y-8 animate-fade-in">
+      {/* Title */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary">Metrics Workspace</h1>
+          <p className="text-text-secondary text-sm mt-1">
+            Deep dive historical time-series analytics of traffic performance and carbon emissions.
+          </p>
         </div>
 
-        {/* Plot 2: Reward Curve */}
-        <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 600 }}>RL Agent Reward Convergence</h2>
-            <TrendingDown size={20} color="var(--accent-green)" />
-          </div>
-          <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', height: '320px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/outputs/figures/reward_curve.png" alt="Training Reward Convergence Curve" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-          </div>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Epsiodic reward values converging over 100,000 steps of training.</p>
-        </div>
+        {/* Session Query Field */}
+        <form onSubmit={handleQuerySubmit} className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Enter Session UUID..."
+            value={querySessionId}
+            onChange={(e) => setQuerySessionId(e.target.value)}
+            className="px-3 py-1.5 bg-white border border-border rounded-lg text-xs font-mono text-text-primary w-64 placeholder:text-text-muted"
+          />
+          <button
+            type="submit"
+            className="px-4 py-1.5 bg-eco-forest hover:bg-eco-forest/90 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+          >
+            Analyze
+          </button>
+        </form>
       </div>
 
-      {/* Historical logs table */}
-      <div className="glass-panel">
-        <h2 style={{ fontSize: '20px', fontWeight: 600, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <BarChart2 color="var(--accent-purple)" />
-          Pollution Indices per lane
-        </h2>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
-                <th style={{ padding: '16px' }}>Lane Identifier</th>
-                <th style={{ padding: '16px' }}>CO₂ rate</th>
-                <th style={{ padding: '16px' }}>NOx rate</th>
-                <th style={{ padding: '16px' }}>PM2.5 rate</th>
-                <th style={{ padding: '16px' }}>Air Quality Index</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Mock items or active lane data */}
-              {['N2C_0', 'S2C_0', 'E2C_0', 'W2C_0'].map((laneId) => (
-                <tr key={laneId} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '16px', fontWeight: 600 }}>{laneId}</td>
-                  <td style={{ padding: '16px' }}>1,245.2 mg/s</td>
-                  <td style={{ padding: '16px' }}>32.4 mg/s</td>
-                  <td style={{ padding: '16px' }}>4.8 mg/s</td>
-                  <td style={{ padding: '16px' }}>
-                    <span style={{ background: 'rgba(0, 230, 118, 0.1)', color: 'var(--accent-green)', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>Optimal (34.2)</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Warning if no session id */}
+      {!querySessionId && (
+        <div className="bg-traffic-yellow/5 border border-traffic-yellow/20 rounded-xl p-6 text-center space-y-3 max-w-xl mx-auto">
+          <AlertTriangle className="h-8 w-8 text-traffic-yellow mx-auto" />
+          <h4 className="font-bold text-text-primary text-sm">No Active Session ID</h4>
+          <p className="text-xs text-text-secondary leading-relaxed">
+            Please copy a past session UUID from logs or start a live simulation to automatically load charts.
+          </p>
         </div>
-      </div>
+      )}
+
+      {querySessionId && (
+        <div className="space-y-6">
+          {/* Active session banner */}
+          <div className="p-4 bg-white border border-border rounded-xl shadow-xs flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-text-secondary">
+              <BarChart3 className="h-4.5 w-4.5 text-eco-green" />
+              <span>Analyzing Run Session: <span className="font-mono font-bold text-text-primary">{querySessionId}</span></span>
+            </div>
+            
+            {wsState.running && wsState.sessionId === querySessionId && (
+              <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-eco-green/10 text-eco-green animate-pulse">
+                <ShieldCheck className="h-3 w-3" /> Live session polling active
+              </span>
+            )}
+          </div>
+
+          {/* Grid of charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {renderAnalyticsChart("CO₂ Emissions", "co2_emission", "#EA580C", "grams", 1000)}
+            {renderAnalyticsChart("NOx Emissions", "nox_emission", "#DC2626", "grams", 1000)}
+            {renderAnalyticsChart("Average Speed", "average_speed", "#06B6D4", "km/h")}
+            {renderAnalyticsChart("Average Waiting Time", "average_waiting_time", "#EAB308", "seconds")}
+            {renderAnalyticsChart("Active Vehicle Count", "vehicle_count", "#334155", "qty")}
+            {renderAnalyticsChart("Fuel Consumption", "fuel_consumption", "#16A34A", "Liters", 1000)}
+            {renderAnalyticsChart("Reinforcement Learning Reward", "reward", "#A855F7", "score")}
+            {renderAnalyticsChart("Traffic Throughput Efficiency", "average_speed", "#0EA5A4", "index")}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

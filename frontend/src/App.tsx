@@ -1,88 +1,63 @@
-import { useState } from 'react';
-import Dashboard from './pages/Dashboard';
-import Simulation from './pages/Simulation';
-import Analytics from './pages/Analytics';
-import Scenarios from './pages/Scenarios';
-import { useWebSocket } from './hooks/useWebSocket';
-import { LayoutDashboard, Radio, BarChart3, Sliders, Leaf } from 'lucide-react';
-
-type Page = 'dashboard' | 'simulation' | 'analytics' | 'scenarios';
+import { useState } from "react";
+import Sidebar, { PageId } from "./components/layout/Sidebar";
+import Header from "./components/layout/Header";
+import Overview from "./pages/Overview";
+import Simulation from "./pages/Simulation";
+import TrafficNetwork from "./pages/TrafficNetwork";
+import CarbonIntelligence from "./pages/CarbonIntelligence";
+import ReinforcementLearning from "./pages/ReinforcementLearning";
+import Analytics from "./pages/Analytics";
+import Experiments from "./pages/Experiments";
+import SystemHealth from "./pages/SystemHealth";
+import Settings from "./pages/Settings";
+import { useWebSocket } from "./hooks/useWebSocket";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
-  
-  // Connect to websocket backend automatically
+  const [currentPage, setCurrentPage] = useState<PageId>("overview");
+
+  // Automatically start WebSocket connection
   useWebSocket();
 
-  const renderPage = () => {
+  const renderActivePage = () => {
     switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard />;
-      case 'simulation':
+      case "overview":
+        return <Overview />;
+      case "simulation":
         return <Simulation />;
-      case 'analytics':
+      case "traffic":
+        return <TrafficNetwork />;
+      case "carbon":
+        return <CarbonIntelligence />;
+      case "rl":
+        return <ReinforcementLearning />;
+      case "analytics":
         return <Analytics />;
-      case 'scenarios':
-        return <Scenarios />;
+      case "experiments":
+        return <Experiments />;
+      case "health":
+        return <SystemHealth />;
+      case "settings":
+        return <Settings />;
       default:
-        return <Dashboard />;
+        return <Overview />;
     }
   };
 
   return (
-    <div className="app-container">
+    <div className="flex h-screen w-screen overflow-hidden bg-bg">
       {/* Sidebar Navigation */}
-      <aside className="nav-sidebar">
-        <div className="brand-header">
-          <Leaf size={28} color="var(--accent-cyan)" fill="var(--accent-cyan)" />
-          <span>EcoTwin</span>
-        </div>
-        
-        <nav className="nav-links">
-          <div 
-            onClick={() => setCurrentPage('dashboard')} 
-            className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
-          >
-            <LayoutDashboard size={18} />
-            <span>Dashboard</span>
-          </div>
+      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
 
-          <div 
-            onClick={() => setCurrentPage('simulation')} 
-            className={`nav-item ${currentPage === 'simulation' ? 'active' : ''}`}
-          >
-            <Radio size={18} />
-            <span>Simulation</span>
-          </div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Header */}
+        <Header />
 
-          <div 
-            onClick={() => setCurrentPage('analytics')} 
-            className={`nav-item ${currentPage === 'analytics' ? 'active' : ''}`}
-          >
-            <BarChart3 size={18} />
-            <span>Analytics</span>
-          </div>
-
-          <div 
-            onClick={() => setCurrentPage('scenarios')} 
-            className={`nav-item ${currentPage === 'scenarios' ? 'active' : ''}`}
-          >
-            <Sliders size={18} />
-            <span>Scenarios</span>
-          </div>
-        </nav>
-        
-        {/* Footnotes */}
-        <div style={{ marginTop: 'auto', fontSize: '11px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-          <div>Digital Twin Environment v1.0</div>
-          <div>SUMO 1.16 Client Connected</div>
-        </div>
-      </aside>
-
-      {/* Main Pages Workspace */}
-      <main className="main-content">
-        {renderPage()}
-      </main>
+        {/* Page content scroll container */}
+        <main className="flex-1 overflow-y-auto p-8">
+          {renderActivePage()}
+        </main>
+      </div>
     </div>
   );
 }
