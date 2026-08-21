@@ -1,0 +1,25 @@
+{
+    "model_type": "RandomForestRegressor",
+    "features": [
+        "vehicle_count",
+        "average_speed",
+        "total_waiting_time",
+        "average_waiting_time",
+        "traffic_flow",
+        "congestion_indicator",
+        "rolling_CO2",
+        "rolling_waiting_time"
+    ],
+    "target": "next_total_CO2",
+    "training_dataset": "data/processed/rl_features.csv",
+    "training_date": "2026-08-21T12:16:00Z",
+    "metrics": {
+        "mae": 2413.5639349148805,
+        "rmse": 4072.3652368886933,
+        "r2": 0.5863242719170458
+    },
+    "library_versions": {
+        "scikit-learn": "1.5.1"
+    },
+    "model_version": "1.0.0"
+}

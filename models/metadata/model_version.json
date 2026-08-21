@@ -1,0 +1,13 @@
+{
+    "project": "EcoTwin",
+    "version": "1.0.0",
+    "dataset_version": "SUMO_TAPAS_Cologne_6to8",
+    "model_version": "1.0.0",
+    "feature_version": "1.0.0",
+    "training_date": "2026-08-21T12:16:00Z",
+    "python_version": "3.13.5 (tags/v3.13.5:6cb20a2, Jun 11 2025, 16:15:46) [MSC v.1943 64 bit (AMD64)]",
+    "library_versions": {
+        "pandas": "2.3.1",
+        "numpy": "2.3.1"
+    }
+}

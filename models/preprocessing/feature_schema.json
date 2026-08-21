@@ -1,0 +1,15 @@
+{
+    "features": [
+        "vehicle_count",
+        "average_speed",
+        "total_waiting_time",
+        "average_waiting_time",
+        "traffic_flow",
+        "congestion_indicator",
+        "rolling_CO2",
+        "rolling_waiting_time"
+    ],
+    "target": "next_total_CO2",
+    "version": "1.0.0",
+    "created_at": "2026-08-21T12:16:00Z"
+}
