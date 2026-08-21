@@ -4,6 +4,126 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Virtual Environments
+.venv
+.venv/
+venv/
+ENV/
+env/
+pyvenv.cfg
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing / Coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Machine Learning Artifacts
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+*.joblib
+*.pkl
+*.zip
+models/ppo/checkpoints/*
+models/ppo/best_model/*
+!models/ppo/checkpoints/.gitkeep
+!models/ppo/best_model/.gitkeep
+
+# RLlib / Training Outputs
+ray_results/
+results/
+runs/
+checkpoints/
+
+# Datasets / Generated Data
+data/raw/*.csv
+data/raw/*.parquet
+data/raw/*.feather
+data/raw/*.joblib
+data/processed/*.csv
+data/processed/*.parquet
+data/processed/*.feather
+data/processed/*.joblib
+data/simulation_runs/*
+data/emissions/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/simulation_runs/.gitkeep
+!data/emissions/.gitkeep
+!data/metadata/.gitkeep
+
+# SUMO Generated Files
+*.sbx
+*.net.xml.bak
+*.rou.xml.bak
+*.add.xml.bak
+*.sumocfg.bak
+*.poly.xml.bak
+*.trips.xml.bak
+*.xml.bak
+simulation/output/
+
+# Logs / Temporary Files
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.temp
+simulation/tapas_cologne/*.log
+
+# Node / React
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+dist-ssr/
+*.local
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment / Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+
+# IDE / Editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Operating System
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Build / Distribution
 build/
 develop-eggs/
 dist/
@@ -21,54 +141,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-.venv
-venv/
-ENV/
-env/
-pyvenv.cfg
-.env
-.env.*
 
-# Node / Frontend
-node_modules/
-dist/
-dist-ssr/
-*.local
-.eslintcache
-.stylelintcache
-*.tsbuildinfo
-.vite/
 
-# SUMO & Simulation Output
-*.sbx
-*.net.xml.bak
-*.rou.xml.bak
-*.add.xml.bak
-*.sumocfg.bak
-simulation/output/
-data/simulation_runs/*
-data/emissions/*
-!data/simulation_runs/.gitkeep
-!data/emissions/.gitkeep
-
-# RL Models & Checkpoints
-models/ppo/checkpoints/*
-models/ppo/best_model/*
-!models/ppo/checkpoints/.gitkeep
-!models/ppo/best_model/.gitkeep
-*.zip
-*.pkl
-
-# OS/IDE
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.swp
-
-# Jupyter Notebooks
-.ipynb_checkpoints
+# Large TAPAS Cologne simulation files
+simulation/tapas_cologne/cologne.net.xml
+simulation/tapas_cologne/cologne.poly.xml
+simulation/tapas_cologne/cologne.trips.xml
