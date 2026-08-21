@@ -1,0 +1,34 @@
+{
+  "features": [
+    "vehicle_count",
+    "average_speed",
+    "total_waiting_time",
+    "average_waiting_time",
+    "traffic_flow",
+    "congestion_indicator",
+    "rolling_CO2",
+    "rolling_waiting_time"
+  ],
+  "feature_order": {
+    "vehicle_count": 0,
+    "average_speed": 1,
+    "total_waiting_time": 2,
+    "average_waiting_time": 3,
+    "traffic_flow": 4,
+    "congestion_indicator": 5,
+    "rolling_CO2": 6,
+    "rolling_waiting_time": 7
+  },
+  "data_types": {
+    "vehicle_count": "int",
+    "average_speed": "float",
+    "total_waiting_time": "float",
+    "average_waiting_time": "float",
+    "traffic_flow": "float",
+    "congestion_indicator": "int",
+    "rolling_CO2": "float",
+    "rolling_waiting_time": "float"
+  },
+  "normalization_requirements": null,
+  "model_version": "1.0.0"
+}

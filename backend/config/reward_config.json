@@ -1,0 +1,7 @@
+{
+  "waiting_time_weight": 0.6,
+  "co2_weight": 0.4,
+  "congestion_weight": 0.0,
+  "throughput_weight": 0.0,
+  "pollution_weight": 0.0
+}

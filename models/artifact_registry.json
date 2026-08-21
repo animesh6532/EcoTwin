@@ -1,0 +1,17 @@
+{
+    "version": "1.0.0",
+    "artifacts": {
+        "preprocessor": {
+            "path": "models/preprocessing/feature_schema.json",
+            "type": "json"
+        },
+        "ml_model": {
+            "path": "models/ml/pollution_predictor.joblib",
+            "type": "joblib"
+        },
+        "ppo_model": {
+            "path": "models/rl/ppo/best_model.zip",
+            "type": "stable_baselines3_zip"
+        }
+    }
+}
