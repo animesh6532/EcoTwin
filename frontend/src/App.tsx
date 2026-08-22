@@ -13,6 +13,7 @@ import Settings from "./pages/Settings";
 import Landing from "./pages/Landing";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { BackgroundLayer } from "./components/layout/BackgroundLayer";
+import { CursorGlow } from "./components/layout/CursorGlow";
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -61,11 +62,21 @@ export default function App() {
 
   // Render Landing page on primary path '/'
   if (currentPath === "/") {
-    return <Landing onEnter={() => navigate("/overview")} navigate={navigate} />;
+    return (
+      <>
+        <CursorGlow />
+        <Landing onEnter={() => navigate("/overview")} navigate={navigate} />;
+      </>
+    );
   }
 
   return (
-    <div className="min-h-screen w-screen text-[#E8D7C5] antialiased font-sans overflow-x-hidden relative flex flex-col justify-between bg-[#050505]">
+    <div 
+      className="min-h-screen w-screen text-[#E8D7C5] antialiased font-sans overflow-x-hidden relative flex flex-col justify-between bg-[#050505]"
+    >
+      {/* Global cursor glow follow */}
+      <CursorGlow />
+
       {/* Cinematic background map and overlays */}
       <BackgroundLayer />
 
