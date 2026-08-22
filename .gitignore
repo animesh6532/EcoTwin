@@ -1,11 +1,15 @@
-# Python
+# ==============================================================================
+# EcoTwin Gitignore Configuration
+# ==============================================================================
+
+# Python Caches & Compiled Files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 
-# Virtual Environments
+# Python Virtual Environments
 .venv
 .venv/
 venv/
@@ -13,17 +17,17 @@ ENV/
 env/
 pyvenv.cfg
 
-# Jupyter
+# Jupyter Notebook Checkpoints
 .ipynb_checkpoints/
 
-# Testing / Coverage
+# Testing & Linting Caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 
-# Machine Learning Artifacts
+# Machine Learning Artifacts & Checkpoints
 *.pt
 *.pth
 *.ckpt
@@ -37,13 +41,13 @@ models/ppo/best_model/*
 !models/ppo/checkpoints/.gitkeep
 !models/ppo/best_model/.gitkeep
 
-# RLlib / Training Outputs
+# Reinforcement Learning Output
 ray_results/
 results/
 runs/
 checkpoints/
 
-# Datasets / Generated Data
+# Datasets & Simulation Outputs (Ignore large data files)
 data/raw/*.csv
 data/raw/*.parquet
 data/raw/*.feather
@@ -60,7 +64,7 @@ data/emissions/*
 !data/emissions/.gitkeep
 !data/metadata/.gitkeep
 
-# SUMO Generated Files
+# SUMO Generated & Backup Files
 *.sbx
 *.net.xml.bak
 *.rou.xml.bak
@@ -70,17 +74,17 @@ data/emissions/*
 *.trips.xml.bak
 *.xml.bak
 simulation/output/
+simulation/tapas_cologne/*.log
 
-# Logs / Temporary Files
+# Logs & Temporary Files
 *.log
 logs/
 tmp/
 temp/
 *.tmp
 *.temp
-simulation/tapas_cologne/*.log
 
-# Node / React
+# Node & React Frontend
 node_modules/
 frontend/node_modules/
 dist/
@@ -96,7 +100,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment / Secrets
+# Environment Config & Secrets
 .env
 .env.*
 !.env.example
@@ -104,7 +108,7 @@ pnpm-debug.log*
 *.key
 *.secret
 
-# IDE / Editor
+# IDE & Editors
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
@@ -117,8 +121,9 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.swp
+*.swo
 
-# Operating System
+# Operating System Files
 .DS_Store
 Thumbs.db
 Desktop.ini
@@ -142,8 +147,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-
-# Large TAPAS Cologne simulation files
+# Large TAPAS Cologne simulation files (must not be committed directly to Git)
 simulation/tapas_cologne/cologne.net.xml
 simulation/tapas_cologne/cologne.poly.xml
 simulation/tapas_cologne/cologne.trips.xml
+cologne_landmark_distances.txt
+simulation/tapas_cologne/cologne_landmark_distances.txt
