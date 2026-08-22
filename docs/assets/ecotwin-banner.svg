@@ -1,0 +1,251 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 500" width="100%" height="100%">
+  <defs>
+    <!-- Fonts -->
+    <style type="text/css">
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap');
+      
+      .text-title {
+        font-family: 'Outfit', -apple-system, sans-serif;
+        font-weight: 900;
+        font-size: 76px;
+        letter-spacing: 0.12em;
+        fill: url(#title-gradient);
+      }
+      
+      .text-subtitle {
+        font-family: 'Outfit', -apple-system, sans-serif;
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: 0.38em;
+        fill: #FFF7ED;
+        opacity: 0.85;
+      }
+      
+      .text-desc {
+        font-family: 'Outfit', -apple-system, sans-serif;
+        font-weight: 400;
+        font-size: 15px;
+        fill: #FFF7ED;
+        opacity: 0.6;
+      }
+      
+      .text-mono {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        fill: #FFB347;
+      }
+      
+      .network-line {
+        stroke-dasharray: 8, 8;
+        animation: dash 30s linear infinite;
+      }
+      
+      .glow-node {
+        transform-origin: center;
+        animation: pulse 3s ease-in-out infinite;
+      }
+      
+      @keyframes dash {
+        to {
+          stroke-dashoffset: -1000;
+        }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.15); opacity: 1; }
+      }
+    </style>
+
+    <!-- Gradients -->
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050505" />
+      <stop offset="50%" stop-color="#0B0B0B" />
+      <stop offset="100%" stop-color="#050505" />
+    </linearGradient>
+
+    <linearGradient id="title-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF7A00" />
+      <stop offset="60%" stop-color="#FFB347" />
+      <stop offset="100%" stop-color="#FFF7ED" />
+    </linearGradient>
+
+    <linearGradient id="orange-glow" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#FF7A00" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#FF7A00" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="green-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22C55E" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#22C55E" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Filters for Glow -->
+    <filter id="glow-heavy" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur1" />
+      <feGaussianBlur stdDeviation="20" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    
+    <filter id="glow-light" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="500" fill="url(#bg-gradient)" />
+  
+  <!-- Subtle tech grid -->
+  <g stroke="rgba(255, 122, 0, 0.03)" stroke-width="1">
+    <!-- Vertical Grid Lines -->
+    <line x1="100" y1="0" x2="100" y2="500" />
+    <line x1="200" y1="0" x2="200" y2="500" />
+    <line x1="300" y1="0" x2="300" y2="500" />
+    <line x1="400" y1="0" x2="400" y2="500" />
+    <line x1="500" y1="0" x2="500" y2="500" />
+    <line x1="600" y1="0" x2="600" y2="500" />
+    <line x1="700" y1="0" x2="700" y2="500" />
+    <line x1="800" y1="0" x2="800" y2="500" />
+    <line x1="900" y1="0" x2="900" y2="500" />
+    <line x1="1000" y1="0" x2="1000" y2="500" />
+    <line x1="1100" y1="0" x2="1100" y2="500" />
+    <line x1="1200" y1="0" x2="1200" y2="500" />
+    <line x1="1300" y1="0" x2="1300" y2="500" />
+    <line x1="1400" y1="0" x2="1400" y2="500" />
+    <line x1="1500" y1="0" x2="1500" y2="500" />
+    
+    <!-- Horizontal Grid Lines -->
+    <line x1="0" y1="50" x2="1600" y2="50" />
+    <line x1="0" y1="100" x2="1600" y2="100" />
+    <line x1="0" y1="150" x2="1600" y2="150" />
+    <line x1="0" y1="200" x2="1600" y2="200" />
+    <line x1="0" y1="250" x2="1600" y2="250" />
+    <line x1="0" y1="300" x2="1600" y2="300" />
+    <line x1="0" y1="350" x2="1600" y2="350" />
+    <line x1="0" y1="400" x2="1600" y2="400" />
+    <line x1="0" y1="450" x2="1600" y2="450" />
+  </g>
+
+  <!-- Atmospheric glows -->
+  <circle cx="1200" cy="250" r="300" fill="url(#orange-glow)" filter="blur(40px)" pointer-events="none" />
+  <circle cx="1400" cy="350" r="250" fill="url(#green-glow)" filter="blur(40px)" pointer-events="none" />
+
+  <!-- Abstract City Skyline (Low opacity wireframe) -->
+  <g fill="none" stroke="rgba(255, 247, 237, 0.03)" stroke-width="1.5">
+    <rect x="750" y="280" width="60" height="220" />
+    <rect x="770" y="240" width="20" height="40" />
+    <rect x="830" y="200" width="80" height="300" />
+    <line x1="870" y1="120" x2="870" y2="200" />
+    <rect x="930" y="320" width="50" height="180" />
+    <rect x="1000" y="150" width="90" height="350" stroke="rgba(255, 122, 0, 0.05)" />
+    <line x1="1045" y1="70" x2="1045" y2="150" stroke="rgba(255, 122, 0, 0.05)" />
+    <rect x="1110" y="260" width="70" height="240" />
+    <rect x="1200" y="180" width="100" height="320" />
+    <polygon points="1200,180 1250,110 1300,180" />
+    <rect x="1320" y="300" width="60" height="200" />
+    <rect x="1400" y="220" width="85" height="280" stroke="rgba(34, 197, 94, 0.04)" />
+  </g>
+
+  <!-- Digital Twin Network Roads & Interconnected Trails -->
+  <g fill="none" stroke-linecap="round">
+    <!-- Green Environmental Carbon intelligence flow -->
+    <path d="M 750 420 Q 900 480, 1100 430 T 1500 410" stroke="#22C55E" stroke-width="5" stroke-opacity="0.1" filter="url(#glow-heavy)" />
+    <path d="M 750 420 Q 900 480, 1100 430 T 1500 410" stroke="#22C55E" stroke-width="1.5" stroke-opacity="0.4" />
+    
+    <!-- Main Traffic Networks -->
+    <path d="M 800 350 C 950 150, 1100 450, 1300 250 S 1450 150, 1600 300" stroke="#FF7A00" stroke-width="4" stroke-opacity="0.15" filter="url(#glow-heavy)" />
+    <path d="M 800 350 C 950 150, 1100 450, 1300 250 S 1450 150, 1600 300" stroke="#FF7A00" stroke-width="1.5" stroke-opacity="0.6" />
+    <path d="M 800 350 C 950 150, 1100 450, 1300 250 S 1450 150, 1600 300" stroke="#FFF7ED" stroke-width="1" class="network-line" stroke-opacity="0.9" />
+
+    <path d="M 750 180 C 900 300, 1050 100, 1250 320 S 1450 380, 1550 200" stroke="#FFB347" stroke-width="3" stroke-opacity="0.1" filter="url(#glow-heavy)" />
+    <path d="M 750 180 C 900 300, 1050 100, 1250 320 S 1450 380, 1550 200" stroke="#FFB347" stroke-width="1" stroke-opacity="0.4" />
+    <path d="M 750 180 C 900 300, 1050 100, 1250 320 S 1450 380, 1550 200" stroke="#FFF7ED" stroke-width="0.75" class="network-line" stroke-opacity="0.7" />
+
+    <!-- Technical Cross-Grid lines (Telemetry flow) -->
+    <line x1="945" y1="210" x2="1080" y2="335" stroke="rgba(255, 179, 71, 0.2)" stroke-width="1" stroke-dasharray="4, 4" />
+    <line x1="1080" y1="335" x2="1285" y2="280" stroke="rgba(34, 197, 94, 0.2)" stroke-width="1" stroke-dasharray="4, 4" />
+    <line x1="1285" y1="280" x2="1405" y2="370" stroke="rgba(255, 122, 0, 0.2)" stroke-width="1" stroke-dasharray="4, 4" />
+    <line x1="1080" y1="335" x2="1045" y2="150" stroke="rgba(255, 247, 237, 0.15)" stroke-width="1" />
+  </g>
+
+  <!-- Glowing Intersection Traffic Light Nodes -->
+  <g>
+    <!-- Node 1: Amber Signal -->
+    <circle cx="945" cy="210" r="14" fill="#FFB347" fill-opacity="0.15" filter="url(#glow-heavy)" />
+    <circle cx="945" cy="210" r="6" fill="#FFB347" filter="url(#glow-light)" />
+    <circle cx="945" cy="210" r="2.5" fill="#FFF7ED" />
+
+    <!-- Node 2: Orange Signal (Pulsing) -->
+    <g class="glow-node">
+      <circle cx="1080" cy="335" r="18" fill="#FF7A00" fill-opacity="0.2" filter="url(#glow-heavy)" />
+      <circle cx="1080" cy="335" r="8" fill="#FF7A00" filter="url(#glow-light)" />
+    </g>
+    <circle cx="1080" cy="335" r="3.5" fill="#FFF7ED" />
+
+    <!-- Node 3: Green Environmental Node -->
+    <circle cx="1285" cy="280" r="15" fill="#22C55E" fill-opacity="0.2" filter="url(#glow-heavy)" />
+    <circle cx="1285" cy="280" r="7" fill="#22C55E" filter="url(#glow-light)" />
+    <circle cx="1285" cy="280" r="3" fill="#FFF7ED" />
+
+    <!-- Node 4: Red Alert Node -->
+    <circle cx="1405" cy="370" r="14" fill="#EF4444" fill-opacity="0.15" filter="url(#glow-heavy)" />
+    <circle cx="1405" cy="370" r="6" fill="#EF4444" filter="url(#glow-light)" />
+    <circle cx="1405" cy="370" r="2.5" fill="#FFF7ED" />
+  </g>
+
+  <!-- Brand Typography Content Block (Left Aligned) -->
+  <g transform="translate(100, 0)">
+    
+    <!-- Micro Technical Header -->
+    <g transform="translate(0, 115)">
+      <rect x="0" y="-12" width="135" height="18" fill="rgba(255, 122, 0, 0.08)" rx="3" stroke="rgba(255, 122, 0, 0.25)" stroke-width="0.75" />
+      <text class="text-mono" x="8" y="0" fill="#FF7A00">DIGITAL TWIN NODE</text>
+    </g>
+    
+    <!-- Main Title -->
+    <text class="text-title" x="-3" y="212">ECOTWIN</text>
+    
+    <!-- Subtitle -->
+    <text class="text-subtitle" x="0" y="260">INTELLIGENT URBAN TRAFFIC &amp; CARBON INTELLIGENCE</text>
+    
+    <!-- Brief descriptive statement -->
+    <text class="text-desc" x="0" y="305">AI-powered digital twin optimizing metropolitan traffic signal schedules</text>
+    <text class="text-desc" x="0" y="327">to minimize waiting delays and vehicle carbon emission dispersion.</text>
+
+    <!-- Technical Infrastructure Tags -->
+    <g transform="translate(0, 395)">
+      <!-- SUMO tag -->
+      <rect x="0" y="-14" width="60" height="20" fill="rgba(255, 247, 237, 0.03)" rx="3" stroke="rgba(255, 247, 237, 0.15)" stroke-width="0.75" />
+      <text class="text-mono" x="30" y="0" text-anchor="middle" fill="#FFF7ED" opacity="0.6">SUMO</text>
+      
+      <!-- TRACI tag -->
+      <rect x="72" y="-14" width="65" height="20" fill="rgba(255, 247, 237, 0.03)" rx="3" stroke="rgba(255, 247, 237, 0.15)" stroke-width="0.75" />
+      <text class="text-mono" x="104.5" y="0" text-anchor="middle" fill="#FFF7ED" opacity="0.6">TRACI</text>
+      
+      <!-- PPO RL tag -->
+      <rect x="149" y="-14" width="70" height="20" fill="rgba(255, 122, 0, 0.08)" rx="3" stroke="rgba(255, 122, 0, 0.25)" stroke-width="0.75" />
+      <text class="text-mono" x="184" y="0" text-anchor="middle" fill="#FF7A00">PPO RL</text>
+      
+      <!-- FASTAPI tag -->
+      <rect x="231" y="-14" width="80" height="20" fill="rgba(255, 247, 237, 0.03)" rx="3" stroke="rgba(255, 247, 237, 0.15)" stroke-width="0.75" />
+      <text class="text-mono" x="271" y="0" text-anchor="middle" fill="#FFF7ED" opacity="0.6">FASTAPI</text>
+      
+      <!-- WEBSOCKET tag -->
+      <rect x="323" y="-14" width="105" height="20" fill="rgba(34, 197, 94, 0.05)" rx="3" stroke="rgba(34, 197, 94, 0.2)" stroke-width="0.75" />
+      <text class="text-mono" x="375.5" y="0" text-anchor="middle" fill="#22C55E">REAL-TIME WS</text>
+    </g>
+  </g>
+  
+  <!-- Outer border overlay for premium clean card feeling -->
+  <rect x="1" y="1" width="1598" height="498" fill="none" stroke="rgba(255, 247, 237, 0.05)" stroke-width="2" rx="0" />
+</svg>
