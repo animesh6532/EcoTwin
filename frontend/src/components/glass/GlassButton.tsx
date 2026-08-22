@@ -10,19 +10,34 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
   className = "",
   variant = "secondary",
   size = "md",
+  style,
   ...props
 }) => {
   const getVariantStyles = () => {
     switch (variant) {
       case "primary":
-        return "bg-[#FF8A00] text-[#050505] font-bold border-none hover:bg-[#FF9F1C] hover:-translate-y-0.5 active:translate-y-0 hover:shadow-[0_8px_24px_rgba(255,138,0,0.25)]";
+        return "hover:-translate-y-0.5 active:translate-y-0";
       case "danger":
         return "bg-[#EF4444]/20 text-[#FFF7ED] border border-[#EF4444]/35 hover:bg-[#EF4444]/30 hover:border-[#EF4444]/65 active:translate-y-0";
       case "ghost":
-        return "bg-transparent text-[#D6C3AE] border border-transparent hover:bg-white/5 active:translate-y-0";
+        return "bg-transparent text-[#CDBBA8] border border-transparent hover:bg-white/5 active:translate-y-0";
       default: // secondary
-        return "bg-transparent text-[#FFE7CC] border border-[rgba(255,183,106,0.25)] hover:bg-[#FF8A00]/10 hover:border-[#FF8A00]/40 active:translate-y-0";
+        return "bg-white/5 text-[#FFF7ED] border border-[rgba(255,179,71,0.25)] hover:bg-[#FF8A00]/10 hover:border-[#FF8A00]/40 active:translate-y-0";
     }
+  };
+
+  const getInlineStyles = () => {
+    if (variant === "primary") {
+      return {
+        background: "linear-gradient(135deg, #FF7A00, #FFB347)",
+        color: "#160A02",
+        fontWeight: 700,
+        boxShadow: "0 8px 25px rgba(255,122,0,0.25)",
+        border: "none",
+        ...style
+      };
+    }
+    return style;
   };
 
   const getSizeStyles = () => {
@@ -38,7 +53,8 @@ export const GlassButton: React.FC<GlassButtonProps> = ({
 
   return (
     <button
-      className={`inline-flex items-center justify-center font-mono tracking-widest uppercase transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF8A00]/45 focus:ring-offset-1 focus:ring-offset-foundation-dark ${getVariantStyles()} ${getSizeStyles()} ${className}`}
+      className={`inline-flex items-center justify-center font-mono tracking-widest uppercase transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#FF8A00]/45 focus:ring-offset-1 focus:ring-offset-[#050505] ${getVariantStyles()} ${getSizeStyles()} ${className}`}
+      style={getInlineStyles()}
       {...props}
     >
       {children}

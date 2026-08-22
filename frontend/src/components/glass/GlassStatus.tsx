@@ -16,14 +16,32 @@ export const GlassStatus: React.FC<GlassStatusProps> = ({
     // Healthy/Active/Online
     if (s === "active" || s === "online" || s === "healthy" || s === "ok" || s === "connected" || s === "running") {
       return {
-        dot: "bg-[#22C55E] shadow-[0_0_8px_#22C55E]",
-        badge: "text-[#86EFAC] bg-[rgba(34,197,94,0.10)] border-[rgba(34,197,94,0.30)]"
+        color: "#22C55E",
+        bg: "rgba(34, 197, 94, 0.10)",
+        border: "rgba(34, 197, 94, 0.30)"
       };
     }
-    // Warning/Inactive/Offline/Error
+    // Warning
+    if (s === "warning" || s === "connecting" || s === "degraded") {
+      return {
+        color: "#FFB347",
+        bg: "rgba(255, 179, 71, 0.10)",
+        border: "rgba(255, 179, 71, 0.30)"
+      };
+    }
+    // Offline
+    if (s === "offline" || s === "none") {
+      return {
+        color: "#8A7A6B",
+        bg: "rgba(138, 122, 107, 0.10)",
+        border: "rgba(138, 122, 107, 0.30)"
+      };
+    }
+    // Error / Offline / Inactive
     return {
-      dot: "bg-[#EF4444] shadow-[0_0_8px_#EF4444]",
-      badge: "text-[#FFB4B4] bg-[rgba(239,68,68,0.10)] border-[rgba(239,68,68,0.35)]"
+      color: "#EF4444",
+      bg: "rgba(239, 68, 68, 0.10)",
+      border: "rgba(239, 68, 68, 0.35)"
     };
   };
 
@@ -31,13 +49,22 @@ export const GlassStatus: React.FC<GlassStatusProps> = ({
 
   return (
     <div 
-      className={`px-3.5 py-1 border rounded-full flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider ${colors.badge} ${className}`}
+      className={`px-3.5 py-1 border rounded-full flex items-center gap-2 font-mono text-[9px] uppercase tracking-wider ${className}`}
       style={{
+        color: colors.color,
+        background: colors.bg,
+        borderColor: colors.border,
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)"
       }}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${colors.dot}`} />
+      <span 
+        className="h-1.5 w-1.5 rounded-full" 
+        style={{
+          backgroundColor: colors.color,
+          boxShadow: `0 0 10px ${colors.color}`
+        }}
+      />
       <span>{label}: {status}</span>
     </div>
   );

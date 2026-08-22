@@ -103,10 +103,10 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
         <header className="fixed top-6 left-8 right-8 z-50 flex items-center justify-between pointer-events-none max-w-7xl mx-auto">
           <div 
             style={{ 
-              background: "rgba(15, 12, 9, 0.84)", 
-              borderColor: "rgba(255, 184, 77, 0.18)",
-              backdropFilter: "blur(24px)",
-              boxShadow: "0 15px 45px rgba(0,0,0,0.35)",
+              background: "rgba(8, 7, 6, 0.72)", 
+              borderColor: "rgba(255, 145, 40, 0.20)",
+              backdropFilter: "blur(22px)",
+              boxShadow: "0 15px 50px rgba(0,0,0,0.45)",
               borderRadius: "28px"
             }}
             className="w-full flex items-center justify-between pointer-events-auto border rounded-[28px] px-8 py-3.5"

@@ -84,8 +84,8 @@ export default function FloatingNav({ currentPath, navigate }: FloatingNavProps)
               style={
                 isActive
                   ? {
-                      background: "rgba(255, 138, 0, 0.12)",
-                      borderColor: "rgba(255, 138, 0, 0.45)",
+                      background: "linear-gradient(135deg, rgba(255, 122, 0, 0.20), rgba(255, 179, 71, 0.08))",
+                      borderColor: "rgba(255, 122, 0, 0.45)",
                       color: "#FFF7ED"
                     }
                   : {
@@ -96,7 +96,7 @@ export default function FloatingNav({ currentPath, navigate }: FloatingNavProps)
               }
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-all duration-300 shrink-0 border ${
                 isActive
-                  ? "shadow-[0_0_15px_rgba(255,138,0,0.12)] font-bold text-[#FFF7ED]"
+                  ? "shadow-[0_0_22px_rgba(255,122,0,0.12)] font-bold text-[#FFF7ED]"
                   : "hover:text-[#FFF7ED] hover:bg-[#FF8A00]/10"
               }`}
             >
