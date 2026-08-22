@@ -19,18 +19,20 @@ import {
   Info, 
   Search,
   Sliders,
-  Settings
+  Settings,
+  Activity,
+  Users
 } from "lucide-react";
 import { toast } from "../utils/toast";
 import { SimulationStatus } from "../types";
+import { GlassCard } from "../components/glass/GlassCard";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 
 const CENTER_LAT = 52.5200;
 const CENTER_LNG = 13.4050;
 
 function sumoToLatLng(x: number, y: number): [number, number] {
-  // 1 degree of latitude is ~111,320m
   const lat = CENTER_LAT + (y / 111320);
-  // longitude depends on latitude
   const lng = CENTER_LNG + (x / (111320 * Math.cos(CENTER_LAT * Math.PI / 180)));
   return [lat, lng];
 }
@@ -48,16 +50,28 @@ export default function Simulation() {
     simulationTime,
     vehicles,
     trafficLights,
-    sessionId,
     pollution,
     selectedVehicleId,
     selectVehicle,
     selectIntersection,
     setSimulationStatus,
     resetState,
+    fetchSimulationMetrics,
+    averageSpeed,
+    averageWaitingTime,
+    co2,
   } = useSimulationStore();
 
-  // Settings state for start configuration
+  // Keep a local timeline history of the active session
+  const [timelineHistory, setTimelineHistory] = useState<{
+    step: string;
+    vehicles: number;
+    speed: number;
+    delay: number;
+    co2: number;
+  }[]>([]);
+
+  // Settings configuration state
   const [scenario, setScenario] = useState("normal");
   const [runGui, setRunGui] = useState(false);
   const [maxSteps, setMaxSteps] = useState(1000);
@@ -82,6 +96,36 @@ export default function Simulation() {
     }
   }, [simStatus, setSimulationStatus]);
 
+  // Sync timeline history
+  useEffect(() => {
+    if (running && vehicles.length > 0) {
+      setTimelineHistory((prev) => {
+        const stepStr = `${simulationTime.toFixed(0)}s`;
+        if (prev.length > 0 && prev[prev.length - 1].step === stepStr) {
+          return prev;
+        }
+        const next = [
+          ...prev,
+          {
+            step: stepStr,
+            vehicles: vehicles.length,
+            speed: averageSpeed || 25,
+            delay: averageWaitingTime || 10,
+            co2: co2 ? co2 / 1000 : 5, // in grams
+          }
+        ];
+        return next.slice(-30); // Keep last 30 frames
+      });
+    }
+  }, [simulationTime, running, vehicles.length, averageSpeed, averageWaitingTime, co2]);
+
+  // Reset timeline when simulation stops
+  useEffect(() => {
+    if (!running) {
+      setTimelineHistory([]);
+    }
+  }, [running]);
+
   // Initialize Map
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;
@@ -92,33 +136,28 @@ export default function Simulation() {
       minZoom: 14,
     }).setView([CENTER_LAT, CENTER_LNG], 16);
 
-    // Light neutral basemap tile layer
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
+    // Dark Matter basemap
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
       maxZoom: 20
     }).addTo(map);
 
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
-    // Draw main roads reference lines
-    const lineOptions = { color: "#CBD5E1", weight: 8, opacity: 0.7 };
-    
-    // N-S road
+    // Reference roads
+    const lineOptions = { color: "#2A170C", weight: 8, opacity: 0.6 };
     L.polyline([sumoToLatLng(0, -500), sumoToLatLng(0, 500)], lineOptions).addTo(map);
-    // E-W road
     L.polyline([sumoToLatLng(-500, 0), sumoToLatLng(500, 0)], lineOptions).addTo(map);
 
-    // Draw center junction boundary marker
+    // Central junction boundaries
     const centerBounds: [[number, number], [number, number]] = [
       sumoToLatLng(-25, -25),
       sumoToLatLng(25, 25)
     ];
     L.rectangle(centerBounds, {
-      color: "#1E293B",
+      color: "#FF8A00",
       weight: 1.5,
-      fillColor: "#F1F5F9",
-      fillOpacity: 0.6,
+      fillColor: "#FF8A00",
+      fillOpacity: 0.06,
     }).addTo(map).on("click", () => {
       selectIntersection("center");
     });
@@ -126,8 +165,10 @@ export default function Simulation() {
     mapInstanceRef.current = map;
 
     return () => {
-      map.remove();
-      mapInstanceRef.current = null;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
     };
   }, [selectIntersection]);
 
@@ -136,45 +177,40 @@ export default function Simulation() {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clear old cells
     gridCellsRef.current.forEach((cell) => cell.remove());
     gridCellsRef.current = [];
 
-    // Draw pollution cells
     pollution.forEach((cell) => {
-      // Scale coordinates (assume 50x50m cells)
       const halfSize = 25;
       const bounds: [[number, number], [number, number]] = [
         sumoToLatLng(cell.x - halfSize, cell.y - halfSize),
         sumoToLatLng(cell.x + halfSize, cell.y + halfSize)
       ];
 
-      // scientifically styled pollution color scale: clean (cyan) -> red
-      let fillColor = "#06B6D4"; // clean cyan
-      if (cell.intensity > 0.8) fillColor = "#DC2626"; // red
-      else if (cell.intensity > 0.6) fillColor = "#EA580C"; // orange
-      else if (cell.intensity > 0.3) fillColor = "#EAB308"; // yellow
+      let fillColor = "#FFD2A3";
+      if (cell.intensity > 0.8) fillColor = "#FF4D4D";
+      else if (cell.intensity > 0.6) fillColor = "#FF8A00";
+      else if (cell.intensity > 0.3) fillColor = "#FFB84D";
 
       const rect = L.rectangle(bounds, {
         stroke: false,
         fillColor: fillColor,
-        fillOpacity: cell.intensity * 0.3,
+        fillOpacity: cell.intensity * 0.35,
       }).addTo(map);
 
       rect.on("click", () => {
-        toast(`Pollution hotspot: Intensity ${(cell.intensity * 100).toFixed(0)}%, CO₂: ${cell.co2.toFixed(1)}mg`, "info");
+        toast(`Corridor hotspot: Intensity ${(cell.intensity * 100).toFixed(0)}%`, "info");
       });
 
       gridCellsRef.current.push(rect);
     });
   }, [pollution]);
 
-  // Update Signals on Map
+  // Update Traffic Lights on Map
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    // Clear old signals if not present
     Object.keys(signalsRef.current).forEach((id) => {
       if (!trafficLights.find((t) => t.id === id)) {
         signalsRef.current[id].remove();
@@ -182,23 +218,20 @@ export default function Simulation() {
       }
     });
 
-    // Render traffic lights around junction center
     trafficLights.forEach((tls) => {
-      // Place signals slightly offset from center
-      const pos = sumoToLatLng(0, 0); // center
+      const pos = sumoToLatLng(0, 0);
       let signalMarker = signalsRef.current[tls.id];
 
-      // Check current phase index to determine color
       const isGreen = tls.active_phase === 0 || tls.active_phase === 2;
       const isYellow = tls.active_phase === 1 || tls.active_phase === 3;
-      const signalColor = isGreen ? "#16A34A" : isYellow ? "#EAB308" : "#DC2626";
+      const signalColor = isGreen ? "#39D98A" : isYellow ? "#FFB84D" : "#FF4D4D";
 
       if (!signalMarker) {
         signalMarker = L.circleMarker(pos, {
           radius: 8,
           fillColor: signalColor,
-          fillOpacity: 0.9,
-          color: "#FFFFFF",
+          fillOpacity: 0.95,
+          color: "#050505",
           weight: 2,
         }).addTo(map);
 
@@ -213,14 +246,13 @@ export default function Simulation() {
     });
   }, [trafficLights, selectIntersection]);
 
-  // High Performance Vehicle Marker Updates
+  // Update Vehicle Markers
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
     const activeIds = new Set(vehicles.map((v) => v.id));
 
-    // Remove inactive vehicles
     Object.keys(markersRef.current).forEach((id) => {
       if (!activeIds.has(id)) {
         markersRef.current[id].remove();
@@ -228,15 +260,13 @@ export default function Simulation() {
       }
     });
 
-    // Add / Update active vehicles
     vehicles.forEach((v) => {
       const latlng = sumoToLatLng(v.x, v.y);
       let marker = markersRef.current[v.id];
 
-      // Color coding vehicle type
-      let markerColor = "#06B6D4"; // Gasoline passenger (Cyan)
-      if (v.id.includes("electric")) markerColor = "#16A34A"; // EV (Green)
-      else if (v.id.includes("truck")) markerColor = "#334155"; // Truck (slate)
+      let markerColor = "#FF8A00";
+      if (v.id.includes("electric")) markerColor = "#FFE7CC";
+      else if (v.id.includes("truck")) markerColor = "#FFA347";
 
       const isSelected = selectedVehicleId === v.id;
 
@@ -244,8 +274,8 @@ export default function Simulation() {
         marker = L.circleMarker(latlng, {
           radius: isSelected ? 8 : 5,
           fillColor: markerColor,
-          fillOpacity: 0.85,
-          color: isSelected ? "#DC2626" : "#FFFFFF",
+          fillOpacity: 0.9,
+          color: isSelected ? "#FF4D4D" : "#050505",
           weight: isSelected ? 3 : 1.5,
         }).addTo(map);
 
@@ -258,26 +288,37 @@ export default function Simulation() {
         marker.setLatLng(latlng);
         marker.setStyle({
           radius: isSelected ? 8 : 5,
-          color: isSelected ? "#DC2626" : "#FFFFFF",
+          color: isSelected ? "#FF4D4D" : "#050505",
           weight: isSelected ? 3 : 1.5,
         });
       }
     });
   }, [vehicles, selectedVehicleId, selectVehicle]);
 
-  // MUTATIONS FOR CONTROLS
+  // Mutations
   const startMutation = useMutation<SimulationStatus, Error>({
-    mutationFn: () => startSimulation({
-      scenario,
-      gui: runGui,
-      duration: maxSteps,
-      step_length: stepLength,
-      controller: initController,
-    }),
-    onSuccess: (data) => {
-      setSimulationStatus(data);
+    mutationFn: async () => {
+      const startData = await startSimulation({
+        scenario,
+        gui: runGui,
+        duration: maxSteps,
+        step_length: stepLength,
+        controller: initController,
+      });
+      setSimulationStatus(startData);
+
+      const resumeData = await resumeSimulation();
+      setSimulationStatus(resumeData);
+
+      const statusData = await getSimulationStatus();
+      setSimulationStatus(statusData);
+
+      return statusData;
+    },
+    onSuccess: async () => {
+      await fetchSimulationMetrics();
       webSocketService.connect();
-      toast("Simulation started successfully.", "success");
+      toast("Simulation started.", "success");
     },
     onError: (err: any) => {
       toast(err.message || "Failed to start simulation.", "error");
@@ -285,7 +326,11 @@ export default function Simulation() {
   });
 
   const pauseMutation = useMutation<SimulationStatus, Error>({
-    mutationFn: pauseSimulation,
+    mutationFn: async () => {
+      const data = await pauseSimulation();
+      setSimulationStatus(data);
+      return await getSimulationStatus();
+    },
     onSuccess: (data) => {
       setSimulationStatus(data);
       toast("Simulation paused.", "info");
@@ -296,7 +341,11 @@ export default function Simulation() {
   });
 
   const resumeMutation = useMutation<SimulationStatus, Error>({
-    mutationFn: resumeSimulation,
+    mutationFn: async () => {
+      const data = await resumeSimulation();
+      setSimulationStatus(data);
+      return await getSimulationStatus();
+    },
     onSuccess: (data) => {
       setSimulationStatus(data);
       toast("Simulation resumed.", "success");
@@ -307,7 +356,11 @@ export default function Simulation() {
   });
 
   const stepMutation = useMutation<SimulationStatus, Error>({
-    mutationFn: stepSimulation,
+    mutationFn: async () => {
+      const data = await stepSimulation();
+      setSimulationStatus(data);
+      return await getSimulationStatus();
+    },
     onSuccess: (data) => {
       setSimulationStatus(data);
     },
@@ -317,307 +370,348 @@ export default function Simulation() {
   });
 
   const stopMutation = useMutation<SimulationStatus, Error>({
-    mutationFn: stopSimulation,
+    mutationFn: async () => {
+      return await stopSimulation();
+    },
     onSuccess: (data) => {
       setSimulationStatus(data);
       webSocketService.disconnect();
       resetState();
-      toast("Simulation stopped and cleaned up safely.", "info");
+      toast("Simulation stopped safely.", "info");
     },
     onError: (err: any) => {
       toast(err.message, "error");
     }
   });
 
-  // Selected Vehicle Info
   const selectedVehicleDetail = vehicles.find((v) => v.id === selectedVehicleId);
-
-  // Search & highlight
   const filteredVehicles = vehicles.filter((v) =>
     v.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden animate-fade-in">
-      {/* LEFT: Map & Controls (flex-1) */}
-      <div className="flex-1 flex flex-col relative h-full bg-bg-secondary">
-        {/* Map Container */}
-        <div ref={mapRef} className="w-full flex-1 z-0" />
+    <div className="flex flex-col lg:flex-row h-[calc(100vh-8rem)] overflow-hidden animate-fade-in gap-6 text-[#FFF3E5]">
+      
+      {/* LEFT: Map, controls, and bottom timeline */}
+      <div className="flex-1 flex flex-col gap-6 relative h-full">
+        
+        {/* Map panel */}
+        <div className="flex-1 min-h-[350px] relative rounded-[24px] border border-[rgba(255,183,106,0.15)] overflow-hidden shadow-2xl bg-[#050505]">
+          <div ref={mapRef} className="w-full h-full z-0" />
 
-        {/* Configuration Overlay (slide-in) */}
-        {showConfig && !running && (
-          <div className="absolute top-4 left-4 bg-white border border-border shadow-lg rounded-xl p-5 z-20 w-80 space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-border">
-              <h4 className="font-bold text-sm text-text-primary flex items-center gap-1.5">
-                <Settings className="h-4 w-4 text-text-muted" /> Simulation Config
-              </h4>
-              <button 
-                onClick={() => setShowConfig(false)}
-                className="text-text-muted hover:text-text-primary text-xs font-semibold"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block font-medium text-text-secondary mb-1">Scenario File</label>
-                <select 
-                  value={scenario} 
-                  onChange={(e) => setScenario(e.target.value)}
-                  className="w-full p-2 border border-border rounded bg-bg-secondary"
+          {/* Config Drawer overlay inside map */}
+          {showConfig && !running && (
+            <div 
+              style={{ background: "rgba(8,7,6,0.92)", borderColor: "rgba(255,183,106,0.22)" }}
+              className="absolute top-4 left-4 border shadow-2xl rounded-[18px] p-5 z-20 w-80 space-y-4 font-mono text-xs"
+            >
+              <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                <h4 className="font-bold text-[#FFF3E5] flex items-center gap-1.5 uppercase tracking-wider">
+                  <Settings className="h-4 w-4 text-text-muted" /> Config parameters
+                </h4>
+                <button 
+                  onClick={() => setShowConfig(false)}
+                  className="text-text-muted hover:text-text-cream font-bold uppercase tracking-wider text-[9px]"
                 >
-                  <option value="normal">Normal City Grid</option>
-                  <option value="training">Training Layout (SUMO)</option>
-                  <option value="heavy">Heavy Rush-Hour Grid</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-medium text-text-secondary mb-1">Default Controller</label>
-                <select 
-                  value={initController} 
-                  onChange={(e) => setInitController(e.target.value)}
-                  className="w-full p-2 border border-border rounded bg-bg-secondary"
-                >
-                  <option value="fixed_time">Fixed Time Cycle (Baseline)</option>
-                  <option value="ppo">PPO Agent Policy</option>
-                </select>
-              </div>
-
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block font-medium text-text-secondary mb-1">Step Length (s)</label>
-                  <input 
-                    type="number" 
-                    value={stepLength}
-                    step="0.1"
-                    min="0.1"
-                    max="2.0"
-                    onChange={(e) => setStepLength(parseFloat(e.target.value))}
-                    className="w-full p-1.5 border border-border rounded bg-bg-secondary font-mono"
-                  />
-                </div>
-                <div className="flex-1">
-                  <label className="block font-medium text-text-secondary mb-1">Max Steps</label>
-                  <input 
-                    type="number" 
-                    value={maxSteps}
-                    onChange={(e) => setMaxSteps(parseInt(e.target.value))}
-                    className="w-full p-1.5 border border-border rounded bg-bg-secondary font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-2">
-                <input 
-                  type="checkbox" 
-                  id="gui-check"
-                  checked={runGui}
-                  onChange={(e) => setRunGui(e.target.checked)}
-                  className="rounded border-border text-eco-green focus:ring-eco-green"
-                />
-                <label htmlFor="gui-check" className="font-medium text-text-secondary">Run SUMO GUI Window</label>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Floating Controls Bar */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur border border-border shadow-lg rounded-full px-6 py-3 flex items-center gap-4 z-10 w-max max-w-xl">
-          <div className="flex items-center gap-2 border-r border-border pr-4">
-            {!running ? (
-              <>
-                <button
-                  onClick={() => startMutation.mutate()}
-                  disabled={startMutation.isPending}
-                  className="bg-eco-green hover:bg-eco-forest text-white rounded-full p-2.5 transition-colors disabled:opacity-50"
-                  title="Start Simulation"
-                >
-                  <Play className="h-4 w-4 fill-white" />
+                  Close
                 </button>
-                <button
-                  onClick={() => setShowConfig(!showConfig)}
-                  className="text-text-secondary hover:text-text-primary p-2"
-                  title="Configure"
-                >
-                  <Sliders className="h-4 w-4" />
-                </button>
-              </>
-            ) : (
-              <>
-                {paused ? (
-                  <button
-                    onClick={() => resumeMutation.mutate()}
-                    disabled={resumeMutation.isPending}
-                    className="bg-eco-green hover:bg-eco-forest text-white rounded-full p-2.5 transition-colors"
-                    title="Resume"
+              </div>
+
+              <div className="space-y-3 font-mono">
+                <div>
+                  <label className="block text-text-pale mb-1 font-bold">Scenario file</label>
+                  <select 
+                    value={scenario} 
+                    onChange={(e) => setScenario(e.target.value)}
+                    className="w-full p-2 border border-brand-orange/20 rounded-lg bg-[#120D09] text-text-cream"
                   >
-                    <Play className="h-4 w-4 fill-white" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => pauseMutation.mutate()}
-                    disabled={pauseMutation.isPending}
-                    className="bg-traffic-yellow hover:bg-yellow-600 text-white rounded-full p-2.5 transition-colors"
-                    title="Pause"
+                    <option value="normal">Normal City Grid</option>
+                    <option value="training">Training Layout (SUMO)</option>
+                    <option value="heavy">Heavy Rush-Hour Grid</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-text-pale mb-1 font-bold">Controller mode</label>
+                  <select 
+                    value={initController} 
+                    onChange={(e) => setInitController(e.target.value)}
+                    className="w-full p-2 border border-brand-orange/20 rounded-lg bg-[#120D09] text-text-cream"
                   >
-                    <Pause className="h-4 w-4 fill-white" />
-                  </button>
-                )}
+                    <option value="fixed_time">Fixed Time Cycle (Baseline)</option>
+                    <option value="ppo">PPO Agent Policy</option>
+                  </select>
+                </div>
 
-                <button
-                  onClick={() => stepMutation.mutate()}
-                  disabled={stepMutation.isPending}
-                  className="text-text-secondary hover:text-text-primary bg-bg-secondary rounded-full p-2"
-                  title="Step Simulation"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block text-text-pale mb-1 font-bold">Step (s)</label>
+                    <input 
+                      type="number" 
+                      value={stepLength}
+                      step="0.1"
+                      min="0.1"
+                      max="2.0"
+                      onChange={(e) => setStepLength(parseFloat(e.target.value))}
+                      className="w-full p-2 border border-brand-orange/20 rounded-lg bg-[#120D09] text-text-cream font-mono"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-text-pale mb-1 font-bold">Max steps</label>
+                    <input 
+                      type="number" 
+                      value={maxSteps}
+                      onChange={(e) => setMaxSteps(parseInt(e.target.value))}
+                      className="w-full p-2 border border-brand-orange/20 rounded-lg bg-[#120D09] text-text-cream font-mono"
+                    />
+                  </div>
+                </div>
 
-                <button
-                  onClick={() => stopMutation.mutate()}
-                  disabled={stopMutation.isPending}
-                  className="bg-carbon-critical hover:bg-red-700 text-white rounded-full p-2.5 transition-colors"
-                  title="Stop"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Quick Metrics in Control bar */}
-          <div className="flex items-center gap-4 text-xs font-medium text-text-secondary font-mono">
-            <div>
-              <span>Vehicles:</span>{" "}
-              <span className="font-bold text-text-primary">{vehicles.length}</span>
-            </div>
-            <div className="border-l border-border pl-4">
-              <span>Time:</span>{" "}
-              <span className="font-bold text-text-primary">{simulationTime.toFixed(1)}s</span>
-            </div>
-            {sessionId && (
-              <div className="border-l border-border pl-4 text-[10px] text-text-muted">
-                Session: {sessionId.substring(0, 8)}...
+                <div className="flex items-center gap-2 pt-2 text-text-pale">
+                  <input 
+                    type="checkbox" 
+                    id="gui-check"
+                    checked={runGui}
+                    onChange={(e) => setRunGui(e.target.checked)}
+                    className="rounded border-brand-orange/20 text-brand-orange focus:ring-brand-orange bg-[#120D09]"
+                  />
+                  <label htmlFor="gui-check" className="font-bold">Run SUMO GUI Window</label>
+                </div>
               </div>
-            )}
+            </div>
+          )}
+
+          {/* Floating Map Actions Panel */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#080706]/85 backdrop-blur border border-brand-orange/20 shadow-2xl rounded-full px-6 py-3 flex items-center gap-4 z-10 w-max max-w-xl">
+            <div className="flex items-center gap-2.5 border-r border-white/5 pr-4">
+              {!running ? (
+                <>
+                  <button
+                    onClick={() => startMutation.mutate()}
+                    disabled={startMutation.isPending}
+                    className="bg-brand-orange hover:bg-brand-bright text-[#050505] rounded-full p-2.5 transition-colors disabled:opacity-50"
+                    title="Start Simulation"
+                  >
+                    <Play className="h-4 w-4 fill-current" />
+                  </button>
+                  <button
+                    onClick={() => setShowConfig(!showConfig)}
+                    className="text-text-pale hover:text-text-cream p-2"
+                    title="Config"
+                  >
+                    <Sliders className="h-4 w-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  {paused ? (
+                    <button
+                      onClick={() => resumeMutation.mutate()}
+                      disabled={resumeMutation.isPending}
+                      className="bg-brand-orange hover:bg-brand-bright text-[#050505] rounded-full p-2.5 transition-colors"
+                      title="Resume"
+                    >
+                      <Play className="h-4 w-4 fill-current" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => pauseMutation.mutate()}
+                      disabled={pauseMutation.isPending}
+                      className="bg-brand-amber hover:bg-brand-amberGlow text-[#050505] rounded-full p-2.5 transition-colors"
+                      title="Pause"
+                    >
+                      <Pause className="h-4 w-4 fill-current" />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => stepMutation.mutate()}
+                    disabled={stepMutation.isPending}
+                    className="text-text-pale hover:text-white bg-white/5 rounded-full p-2"
+                    title="Step"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+
+                  <button
+                    onClick={() => stopMutation.mutate()}
+                    disabled={stopMutation.isPending}
+                    className="bg-eco-danger hover:bg-red-700 text-white rounded-full p-2.5 transition-colors"
+                    title="Stop"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Micro Telemetry Bar */}
+            <div className="flex items-center gap-4 text-[10px] font-bold text-brand-amber font-mono tracking-wider">
+              <div className="flex items-center gap-1">
+                <Users className="h-3.5 w-3.5 text-text-muted" />
+                <span>VEHICLES:</span>{" "}
+                <span className="font-bold text-text-cream">{vehicles.length}</span>
+              </div>
+              <div className="border-l border-white/5 pl-4 flex items-center gap-1">
+                <Activity className="h-3.5 w-3.5 text-text-muted" />
+                <span>TIME:</span>{" "}
+                <span className="font-bold text-text-cream">{simulationTime.toFixed(1)}s</span>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Live Telemetry Timeline at Bottom */}
+        <GlassCard variant="chart" className="h-48 flex flex-col justify-between">
+          <div className="mb-2">
+            <h4 className="text-[10px] font-bold font-mono uppercase tracking-widest text-text-muted">Live Telemetry Timeline</h4>
+            <p className="text-[9px] text-text-pale">Time-series speed and vehicle quantity parameters</p>
+          </div>
+
+          <div className="h-32">
+            {timelineHistory.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={timelineHistory}>
+                  <defs>
+                    <linearGradient id="colorTimelineVehicles" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FF8A00" stopOpacity={0.12}/>
+                      <stop offset="95%" stopColor="#FF8A00" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorTimelineSpeed" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FFB84D" stopOpacity={0.10}/>
+                      <stop offset="95%" stopColor="#FFB84D" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="step" stroke="#2A170C" tickLine={false} tick={{ fill: '#8D7868', fontSize: 8, fontFamily: 'monospace' }} />
+                  <YAxis stroke="#2A170C" tickLine={false} tick={{ fill: '#8D7868', fontSize: 8, fontFamily: 'monospace' }} />
+                  <Tooltip
+                    contentStyle={{ background: "#080706", border: "1px solid rgba(255,183,106,0.18)", borderRadius: "8px", fontSize: 10, fontFamily: 'monospace' }}
+                  />
+                  <Area type="monotone" dataKey="vehicles" name="Vehicles (qty)" stroke="#FF8A00" strokeWidth={1.5} fillOpacity={1} fill="url(#colorTimelineVehicles)" />
+                  <Area type="monotone" dataKey="speed" name="Avg Speed (km/h)" stroke="#FFB84D" strokeWidth={1.5} fillOpacity={1} fill="url(#colorTimelineSpeed)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-text-muted text-xs border border-dashed border-brand-orange/15 rounded-xl font-mono">
+                <span>Simulation not running. Telemetry offline.</span>
+              </div>
+            )}
+          </div>
+        </GlassCard>
+
       </div>
 
-      {/* RIGHT: Vehicles Inspector Drawer (w-80 / 320px) */}
-      <div className="w-80 bg-white border-l border-border flex flex-col h-full z-10">
-        {/* Search Header */}
-        <div className="p-4 border-b border-border">
-          <h3 className="font-bold text-text-primary text-sm mb-3">Network Vehicles</h3>
+      {/* RIGHT: Selected Telemetry Details Drawer */}
+      <GlassCard className="w-full lg:w-80 flex flex-col h-full shrink-0">
+        <div className="p-4 border-b border-[rgba(255,183,106,0.12)]">
+          <h3 className="font-bold text-[#FFF3E5] text-xs font-mono uppercase tracking-wider mb-3">Telemetry Stream</h3>
           <div className="relative">
             <input
               type="text"
               placeholder="Search vehicle ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-bg-secondary border border-border rounded-lg pl-9 pr-3 py-2 text-xs text-text-primary placeholder:text-text-muted"
+              className="w-full bg-[#120D09]/45 border border-[#FFB84D]/20 rounded-lg pl-9 pr-3 py-2 text-xs text-[#FFF7ED] font-mono placeholder:text-[#A9947D] focus:ring-1 focus:ring-brand-orange"
             />
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-text-muted" />
           </div>
         </div>
 
-        {/* Selected Vehicle details (Inspector) */}
-        <div className="flex-1 overflow-y-auto divide-y divide-border">
+        <div className="flex-1 overflow-y-auto divide-y divide-white/5 font-mono text-xs">
           {selectedVehicleDetail ? (
             <div className="p-4 space-y-4 animate-fade-in">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Active Inspector</span>
-                  <h4 className="font-bold text-text-primary text-sm mt-0.5">Vehicle: {selectedVehicleDetail.id}</h4>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted">Vehicle Details</span>
+                  <h4 className="font-bold text-text-cream text-xs mt-0.5 font-mono">{selectedVehicleDetail.id}</h4>
                 </div>
                 <button
                   onClick={() => selectVehicle(null)}
-                  className="text-text-muted hover:text-text-primary text-xs"
+                  className="text-text-muted hover:text-text-cream text-[9px] font-bold uppercase tracking-wider"
                 >
-                  Deselect
+                  Clear
                 </button>
               </div>
 
-              {/* Specs Grid */}
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="bg-bg-secondary p-2.5 rounded border border-border">
-                  <div className="text-text-muted text-[10px]">Speed</div>
-                  <div className="font-bold text-text-primary mt-1">{selectedVehicleDetail.speed.toFixed(1)} km/h</div>
+              {/* Stats parameters */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)]">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">Speed</div>
+                  <div className="font-bold text-[#FFF7ED] mt-0.5 font-mono">{selectedVehicleDetail.speed.toFixed(1)} km/h</div>
                 </div>
-                <div className="bg-bg-secondary p-2.5 rounded border border-border">
-                  <div className="text-text-muted text-[10px]">Wait Time</div>
-                  <div className={`font-bold mt-1 ${selectedVehicleDetail.waiting_time > 30 ? "text-carbon-alert" : "text-text-primary"}`}>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)]">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">Wait Time</div>
+                  <div className={`font-bold mt-0.5 font-mono ${selectedVehicleDetail.waiting_time > 30 ? "text-[#FF8A00] animate-pulse" : "text-[#FFF7ED]"}`}>
                     {selectedVehicleDetail.waiting_time.toFixed(1)}s
                   </div>
                 </div>
-                <div className="bg-bg-secondary p-2.5 rounded border border-border">
-                  <div className="text-text-muted text-[10px]">CO₂ Emission</div>
-                  <div className="font-bold text-text-primary mt-1">{selectedVehicleDetail.co2.toFixed(1)} mg</div>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)]">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">CO₂ Rate</div>
+                  <div className="font-bold text-[#FFF7ED] mt-0.5 font-mono">{selectedVehicleDetail.co2.toFixed(0)} mg</div>
                 </div>
-                <div className="bg-bg-secondary p-2.5 rounded border border-border">
-                  <div className="text-text-muted text-[10px]">NOx Emission</div>
-                  <div className="font-bold text-text-primary mt-1">{selectedVehicleDetail.nox.toFixed(2)} mg</div>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)]">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">NOx Rate</div>
+                  <div className="font-bold text-[#FFF7ED] mt-0.5 font-mono">{selectedVehicleDetail.nox.toFixed(1)} mg</div>
                 </div>
-                <div className="bg-bg-secondary p-2.5 rounded border border-border col-span-2">
-                  <div className="text-text-muted text-[10px]">Fuel Consumption</div>
-                  <div className="font-bold text-text-primary mt-1">{selectedVehicleDetail.fuel_consumption.toFixed(2)} ml</div>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)] col-span-2">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">Fuel Burn</div>
+                  <div className="font-bold text-[#FFF7ED] mt-0.5 font-mono">{selectedVehicleDetail.fuel_consumption.toFixed(1)} ml</div>
                 </div>
               </div>
 
               {/* Lane Info */}
-              <div className="text-xs space-y-1.5">
+              <div className="text-[10px] space-y-1.5 border-t border-white/5 pt-3 font-mono">
                 <div>
-                  <span className="text-text-muted">Lane:</span>{" "}
-                  <span className="font-mono text-text-secondary">{selectedVehicleDetail.lane_id}</span>
+                  <span className="text-text-muted">Lane ID:</span>{" "}
+                  <span className="font-bold text-brand-amber">{selectedVehicleDetail.lane_id}</span>
                 </div>
                 <div>
-                  <span className="text-text-muted">Road:</span>{" "}
-                  <span className="font-mono text-text-secondary">{selectedVehicleDetail.road_id}</span>
+                  <span className="text-text-muted">Road Link:</span>{" "}
+                  <span className="font-bold text-brand-amber">{selectedVehicleDetail.road_id}</span>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="p-4 py-8 text-center text-xs text-text-muted space-y-2">
-              <Info className="h-6 w-6 mx-auto text-text-muted/40" />
-              <p>Click any vehicle marker on the map to inspect its real-time telemetry details.</p>
+            <div className="p-4 py-8 text-center text-text-muted space-y-2">
+              <Info className="h-6 w-6 mx-auto text-text-dim/40" />
+              <p className="font-sans leading-relaxed text-[11px]">Select any vehicle marker on the digital twin map to view real-time emission and speed telemetry details.</p>
             </div>
           )}
 
-          {/* List of active filtered vehicles */}
-          <div className="p-4 space-y-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted block mb-2">
-              Active List ({filteredVehicles.length})
+          {/* List of active vehicles */}
+          <div className="p-4 space-y-2 border-t border-white/5">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted block mb-2 font-mono">
+              Active Vehicles ({filteredVehicles.length})
             </span>
             
             {filteredVehicles.length > 0 ? (
-              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                 {filteredVehicles.map((v) => (
                   <button
                     key={v.id}
                     onClick={() => selectVehicle(v.id)}
-                    className={`w-full text-left p-2 rounded text-xs transition-colors border ${
+                    className={`w-full text-left p-2 rounded-lg text-xs transition-colors border font-mono ${
                       selectedVehicleId === v.id
-                        ? "bg-eco-green/10 border-eco-green text-eco-forest font-semibold"
-                        : "bg-bg-secondary border-border text-text-primary hover:bg-border/30"
+                        ? "bg-[#FF8A00]/10 border-[#FF8A00] text-white font-bold"
+                        : "bg-[#120D09]/45 border-[rgba(255,184,77,0.16)] text-[#FFF7ED] hover:bg-white/5"
                     }`}
                   >
                     <div className="flex justify-between items-center">
                       <span>{v.id}</span>
-                      <span className="font-mono text-[10px] text-text-muted">{v.speed.toFixed(0)} km/h</span>
+                      <span className="text-[10px] text-brand-amber font-mono">{v.speed.toFixed(0)} km/h</span>
                     </div>
                   </button>
                 ))}
               </div>
             ) : (
-              <div className="py-8 text-center text-xs text-text-muted border border-dashed border-border rounded-lg">
-                No active vehicles match the search.
+              <div className="py-6 text-center text-xs text-text-muted border border-dashed border-[rgba(255,183,106,0.12)] rounded-lg font-mono">
+                No active traffic flows.
               </div>
             )}
           </div>
         </div>
-      </div>
+      </GlassCard>
+      
     </div>
   );
 }

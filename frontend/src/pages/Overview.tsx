@@ -1,294 +1,421 @@
-import { useQuery } from "@tanstack/react-query";
 import { useSimulationStore } from "../store/simulationStore";
-import { getVehiclesSummary } from "../api/vehicles";
 import { 
   Users, 
   Gauge, 
   Clock, 
   Leaf, 
   Activity, 
-  Droplet,
-  ArrowUpRight,
-  ArrowDownRight,
-  AlertTriangle
+  AlertTriangle,
+  Play
 } from "lucide-react";
 import { 
   ResponsiveContainer, 
-  LineChart, 
-  Line, 
   AreaChart, 
   Area, 
   XAxis, 
   YAxis, 
   Tooltip 
 } from "recharts";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { startSimulation, resumeSimulation, getSimulationStatus } from "../api/simulation";
+import { toast } from "../utils/toast";
+import { webSocketService } from "../services/websocket";
+import L from "leaflet";
+import { GlassCard } from "../components/glass/GlassCard";
+import { GlassPanel } from "../components/glass/GlassPanel";
+import { GlassButton } from "../components/glass/GlassButton";
+import { GlassMetric } from "../components/glass/GlassMetric";
+import { GlassChart } from "../components/glass/GlassChart";
+import { GlassStatus } from "../components/glass/GlassStatus";
 
-// Tiny helper to generate fake historic points for sparklines
-const generateSparklineData = (currentVal: number, seed = 0.5) => {
-  return Array.from({ length: 10 }, (_, i) => ({
-    val: currentVal * (0.85 + Math.sin(i + seed) * 0.15 + (i * 0.01))
-  }));
-};
+const CENTER_LAT = 52.5200;
+const CENTER_LNG = 13.4050;
+
+function sumoToLatLng(x: number, y: number): [number, number] {
+  const lat = CENTER_LAT + (y / 111320);
+  const lng = CENTER_LNG + (x / (111320 * Math.cos(CENTER_LAT * Math.PI / 180)));
+  return [lat, lng];
+}
 
 export default function Overview() {
   const wsState = useSimulationStore();
-  const { data: apiSummary, isLoading, error } = useQuery({
-    queryKey: ["vehiclesSummary"],
-    queryFn: getVehiclesSummary,
-    refetchInterval: wsState.running && !wsState.paused ? 2000 : false, // Poll when running
+  const [emissionsHistory, setEmissionsHistory] = useState<{ time: string; co2: number }[]>([]);
+  
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<Record<string, L.CircleMarker>>({});
+  const signalsRef = useRef<Record<string, L.CircleMarker>>({});
+
+  // Start simulation mutation
+  const startMutation = useMutation({
+    mutationFn: async () => {
+      const startData = await startSimulation({
+        scenario: "normal",
+        gui: false,
+        duration: 1000,
+        step_length: 1.0,
+        controller: "fixed_time",
+      });
+      wsState.setSimulationStatus(startData);
+
+      const resumeData = await resumeSimulation();
+      wsState.setSimulationStatus(resumeData);
+
+      const statusData = await getSimulationStatus();
+      wsState.setSimulationStatus(statusData);
+
+      return statusData;
+    },
+    onSuccess: async () => {
+      await wsState.fetchSimulationMetrics();
+      webSocketService.connect();
+      toast("Simulation started.", "success");
+    },
+    onError: (err: any) => {
+      toast(err.message || "Failed to start simulation.", "error");
+    }
   });
 
-  // Keep a small history for the emissions chart
-  const [emissionsHistory, setEmissionsHistory] = useState<{ time: string; co2: number }[]>([]);
-
+  // Maintain emissions history
   useEffect(() => {
-    if (wsState.running && wsState.metrics.total_co2 > 0) {
+    if (wsState.running && wsState.co2 > 0) {
       setEmissionsHistory((prev) => {
         const timeStr = `${wsState.simulationTime.toFixed(0)}s`;
         if (prev.length > 0 && prev[prev.length - 1].time === timeStr) {
           return prev;
         }
-        const next = [...prev, { time: timeStr, co2: wsState.metrics.total_co2 }];
-        return next.slice(-20); // Keep last 20 frames
+        const next = [...prev, { time: timeStr, co2: wsState.co2 }];
+        return next.slice(-20);
       });
     }
-  }, [wsState.simulationTime, wsState.metrics.total_co2, wsState.running]);
+  }, [wsState.simulationTime, wsState.co2, wsState.running]);
 
-  // Merge API data with WebSocket live state
-  const totalVehicles = wsState.running ? wsState.vehicles.length : (apiSummary?.total_vehicles ?? 0);
-  const averageSpeed = wsState.running ? wsState.metrics.average_speed : (apiSummary?.average_speed ?? 0);
-  const averageWaitingTime = wsState.running ? wsState.metrics.average_waiting_time : (apiSummary?.average_waiting_time ?? 0);
-  const totalCO2 = wsState.running ? wsState.metrics.total_co2 : (apiSummary?.total_co2 ?? 0);
-  // NOx and Fuel are only in API/summary or default
-  const totalNOx = apiSummary?.total_nox ?? 0;
-  const totalFuel = apiSummary?.total_fuel ?? 0;
+  // Telemetry map rendering
+  useEffect(() => {
+    if (!wsState.running || !mapRef.current || mapInstanceRef.current) return;
 
-  const kpis = [
-    {
-      id: "vehicles",
-      title: "Total Vehicles",
-      value: totalVehicles,
-      unit: "qty",
-      icon: Users,
-      color: "text-air-clean",
-      sparkColor: "#0EA5A4",
-      change: "+4.2%",
-      isPositive: true,
-    },
-    {
-      id: "speed",
-      title: "Average Speed",
-      value: averageSpeed.toFixed(1),
-      unit: "km/h",
-      icon: Gauge,
-      color: "text-air-cyan",
-      sparkColor: "#06B6D4",
-      change: "+8.5%",
-      isPositive: true,
-    },
-    {
-      id: "waiting",
-      title: "Avg Waiting Time",
-      value: averageWaitingTime.toFixed(1),
-      unit: "sec",
-      icon: Clock,
-      color: "text-traffic-yellow",
-      sparkColor: "#EAB308",
-      change: "-14.3%",
-      isPositive: true, // waiting time reduction is good!
-    },
-    {
-      id: "co2",
-      title: "CO₂ Emissions",
-      value: (totalCO2 / 1000).toFixed(2), // convert mg to grams
-      unit: "g",
-      icon: Leaf,
-      color: "text-carbon-alert",
-      sparkColor: "#EA580C",
-      change: "-11.8%",
-      isPositive: true,
-    },
-    {
-      id: "nox",
-      title: "NOx Emissions",
-      value: (totalNOx / 1000).toFixed(2),
-      unit: "g",
-      icon: Activity,
-      color: "text-carbon-critical",
-      sparkColor: "#DC2626",
-      change: "-8.4%",
-      isPositive: true,
-    },
-    {
-      id: "fuel",
-      title: "Fuel Consumption",
-      value: (totalFuel / 1000).toFixed(2), // convert ml to Liters
-      unit: "L",
-      icon: Droplet,
-      color: "text-eco-green",
-      sparkColor: "#16A34A",
-      change: "-12.5%",
-      isPositive: true,
-    },
+    const map = L.map(mapRef.current, {
+      zoomControl: false,
+      attributionControl: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      dragging: false,
+      maxZoom: 17,
+      minZoom: 15,
+    }).setView([CENTER_LAT, CENTER_LNG], 16.5);
+
+    // Dark Matter Map Tiles
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 20
+    }).addTo(map);
+
+    // Road lines
+    const lineOptions = { color: "#3A2110", weight: 6, opacity: 0.5 };
+    L.polyline([sumoToLatLng(0, -500), sumoToLatLng(0, 500)], lineOptions).addTo(map);
+    L.polyline([sumoToLatLng(-500, 0), sumoToLatLng(500, 0)], lineOptions).addTo(map);
+
+    // Junction box
+    L.rectangle([sumoToLatLng(-22, -22), sumoToLatLng(22, 22)], {
+      color: "#FF8A00",
+      weight: 1,
+      fillColor: "#FF8A00",
+      fillOpacity: 0.05,
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      markersRef.current = {};
+      signalsRef.current = {};
+    };
+  }, [wsState.running]);
+
+  // Update vehicle markers
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const activeIds = new Set(wsState.vehicles.map((v) => v.id));
+
+    // Remove old
+    Object.keys(markersRef.current).forEach((id) => {
+      if (!activeIds.has(id)) {
+        markersRef.current[id].remove();
+        delete markersRef.current[id];
+      }
+    });
+
+    // Draw active
+    wsState.vehicles.forEach((v) => {
+      const latlng = sumoToLatLng(v.x, v.y);
+      let marker = markersRef.current[v.id];
+
+      let markerColor = "#FF8A00";
+      if (v.id.includes("electric")) markerColor = "#FFE7CC";
+      else if (v.id.includes("truck")) markerColor = "#E06C00";
+
+      if (!marker) {
+        marker = L.circleMarker(latlng, {
+          radius: 3.5,
+          fillColor: markerColor,
+          fillOpacity: 0.95,
+          color: "#050505",
+          weight: 1,
+        }).addTo(map);
+        markersRef.current[v.id] = marker;
+      } else {
+        marker.setLatLng(latlng);
+      }
+    });
+  }, [wsState.vehicles]);
+
+  // Update signals
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    wsState.trafficLights.forEach((tls) => {
+      const pos = sumoToLatLng(0, 0);
+      let signalMarker = signalsRef.current[tls.id];
+
+      const isGreen = tls.active_phase === 0 || tls.active_phase === 2;
+      const isYellow = tls.active_phase === 1 || tls.active_phase === 3;
+      const signalColor = isGreen ? "#39D98A" : isYellow ? "#FFB84D" : "#FF4D4D";
+
+      if (!signalMarker) {
+        signalMarker = L.circleMarker(pos, {
+          radius: 6,
+          fillColor: signalColor,
+          fillOpacity: 0.95,
+          color: "#050505",
+          weight: 1.5,
+        }).addTo(map);
+        signalsRef.current[tls.id] = signalMarker;
+      } else {
+        signalMarker.setStyle({ fillColor: signalColor });
+      }
+    });
+  }, [wsState.trafficLights]);
+
+  // Congestion calculation
+  const getCongestionRate = () => {
+    if (!wsState.running || wsState.totalVehicles === 0) return 0;
+    const slowVehicles = wsState.vehicles.filter((v) => v.speed < 10).length;
+    return (slowVehicles / wsState.totalVehicles) * 100;
+  };
+
+  // Simulation Inactive state (Redesigned Onboarding)
+  if (!wsState.running) {
+    return (
+      <div className="space-y-8 animate-fade-in flex flex-col items-center justify-center min-h-[calc(100vh-14rem)]">
+        <GlassPanel className="max-w-xl w-full text-center space-y-6">
+          <div className="relative flex items-center justify-center h-12 w-12 mx-auto">
+            <div className="absolute inset-0 bg-brand-orange/20 blur-lg rounded-full" />
+            <Leaf className="h-8 w-8 text-brand-orange relative z-10 animate-pulse" />
+          </div>
+          
+          <div className="space-y-2">
+            <h3 className="font-bold text-xl text-text-cream tracking-widest uppercase font-mono">
+              DIGITAL TWIN OFFLINE
+            </h3>
+            <p className="text-text-pale text-xs leading-relaxed max-w-sm mx-auto">
+              Start a SUMO simulation to activate live traffic intelligence and dynamic emissions profiling.
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <GlassButton
+              variant="primary"
+              size="lg"
+              onClick={() => startMutation.mutate()}
+              disabled={startMutation.isPending}
+              className="mx-auto uppercase tracking-widest text-xs"
+            >
+              <Play className="h-4.5 w-4.5 fill-current" />
+              <span>{startMutation.isPending ? "Configuring..." : "Start Simulation"}</span>
+            </GlassButton>
+          </div>
+
+          {/* Quick status grids */}
+          <div className="border-t border-[rgba(255,183,106,0.12)] pt-6 flex justify-center gap-6 text-[10px] font-mono uppercase tracking-wider text-text-muted">
+            <div className="flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${wsState.sumoStatus === "healthy" ? "bg-[#39D98A]" : "bg-[#8D7868]/45"}`} />
+              <span>SUMO</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${wsState.traciStatus === "healthy" ? "bg-[#39D98A]" : "bg-[#8D7868]/45"}`} />
+              <span>TraCI</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className={`h-1.5 w-1.5 rounded-full ${wsState.ppoStatus === "healthy" ? "bg-[#39D98A]" : "bg-[#8D7868]/45"}`} />
+              <span>PPO</span>
+            </div>
+          </div>
+        </GlassPanel>
+      </div>
+    );
+  }
+
+  // Active metrics mapping
+  const metricsList = [
+    { label: "Active Vehicles", value: wsState.totalVehicles, unit: "qty", icon: Users },
+    { label: "Average Speed", value: `${wsState.averageSpeed.toFixed(1)}`, unit: "km/h", icon: Gauge },
+    { label: "Avg Waiting Time", value: `${wsState.averageWaitingTime.toFixed(1)}`, unit: "sec", icon: Clock },
+    { label: "Congestion Index", value: `${getCongestionRate().toFixed(1)}`, unit: "%", icon: Activity },
   ];
 
-  // List of high-wait delayed vehicles
   const delayedVehicles = wsState.vehicles
     .filter((v) => v.waiting_time > 30)
     .sort((a, b) => b.waiting_time - a.waiting_time)
-    .slice(0, 5);
+    .slice(0, 4);
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in text-text-cream">
+      
       {/* Title Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-text-primary">Operations Center</h1>
-        <p className="text-text-secondary text-sm mt-1">
-          Real-time overview of urban environmental parameters and traffic light controls.
-        </p>
-      </div>
-
-      {/* Error state */}
-      {error && (
-        <div className="bg-carbon-critical/5 border border-carbon-critical/20 rounded-lg p-4 text-sm text-carbon-critical">
-          Could not sync initial summary metrics. Please make sure the simulation server is running.
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight uppercase font-sans">ECOTWIN OPERATIONS</h1>
+          <p className="text-text-pale text-xs mt-1">
+            Real-time urban mobility and environmental intelligence.
+          </p>
         </div>
-      )}
-
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {kpis.map((kpi) => {
-          const Icon = kpi.icon;
-          const sparkData = generateSparklineData(Number(kpi.value), kpi.title.length);
-
-          return (
-            <div key={kpi.id} className="bg-white border border-border rounded-xl p-6 shadow-sm flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-center text-text-muted">
-                  <span className="text-xs font-semibold uppercase tracking-wider">{kpi.title}</span>
-                  <Icon className={`h-5 w-5 ${kpi.color}`} />
-                </div>
-                
-                <div className="mt-4 flex items-baseline gap-2">
-                  <span className="text-3xl font-bold tracking-tight text-text-primary">
-                    {isLoading ? "..." : kpi.value}
-                  </span>
-                  <span className="text-xs text-text-muted font-medium">{kpi.unit}</span>
-                </div>
-              </div>
-
-              {/* Sparkline & trend info */}
-              <div className="mt-6 flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  {kpi.isPositive ? (
-                    <ArrowDownRight className="h-4 w-4 text-eco-green" />
-                  ) : (
-                    <ArrowUpRight className="h-4 w-4 text-carbon-critical" />
-                  )}
-                  <span className={`text-xs font-semibold ${kpi.isPositive ? "text-eco-green" : "text-carbon-critical"}`}>
-                    {kpi.change}
-                  </span>
-                  <span className="text-[10px] text-text-muted ml-0.5">vs Fixed-Time</span>
-                </div>
-
-                {/* Micro Sparkline */}
-                <div className="h-10 w-24">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sparkData}>
-                      <Line 
-                        type="monotone" 
-                        dataKey="val" 
-                        stroke={kpi.sparkColor} 
-                        strokeWidth={1.5} 
-                        dot={false} 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        
+        {/* Top Mini status bar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <GlassStatus label="SYS STATE" status="RUNNING" />
+          <GlassStatus label="CONNECTION" status={wsState.connectionState === "connected" ? "connected" : "connecting"} />
+          <GlassStatus label="CONTROLLER" status={wsState.controller === "ppo" ? "PPO RL" : "Fixed-Time"} />
+        </div>
       </div>
 
-      {/* Main Charts & Notifications section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 cols: Live CO2 Emission flow */}
-        <div className="lg:col-span-2 bg-white border border-border rounded-xl p-6 shadow-sm">
-          <h3 className="text-base font-bold text-text-primary mb-1">CO₂ Emission Trends</h3>
-          <p className="text-xs text-text-secondary mb-6">Real-time CO₂ rate flow in the traffic network (measured in mg/s).</p>
+      {/* Hero Telemetry Panel Redesign */}
+      <GlassPanel className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+        
+        {/* Left Side: Dynamic Metrics stack */}
+        <div className="flex flex-col justify-between gap-4">
+          <div className="space-y-2 pb-2 border-b border-[rgba(255,183,106,0.12)]">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-text-muted font-bold block">Live Telemetry Stats</span>
+            <h2 className="text-sm font-bold uppercase font-mono">Operations Feed</h2>
+          </div>
           
-          <div className="h-64">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+            {metricsList.map((m, idx) => (
+              <GlassMetric
+                key={idx}
+                label={m.label}
+                value={m.value}
+                icon={m.icon}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Center / Right: Live digital twin tracking viewport */}
+        <div className="lg:col-span-2 relative rounded-[18px] overflow-hidden border border-brand-orange/15 min-h-[300px] flex flex-col justify-between">
+          {/* Map wrapper */}
+          <div ref={mapRef} className="absolute inset-0 z-0 bg-[#050505]" />
+          
+          {/* Scanline atmospheric overlays */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.18)_50%)] bg-[size:100%_4px] pointer-events-none z-10 opacity-30" />
+          
+          {/* Viewport overlay labels */}
+          <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-[#050505]/85 border border-brand-orange/20 rounded-md font-mono text-[9px] uppercase tracking-widest text-brand-amber flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-orange animate-ping" />
+            Live digital twin map
+          </div>
+          
+          <div className="absolute bottom-4 right-4 z-20 px-3 py-1 bg-[#050505]/85 border border-white/5 rounded-md font-mono text-[9px] uppercase tracking-widest text-text-muted">
+            SIMULATION STEP: {(wsState.simulationTime).toFixed(0)}s
+          </div>
+        </div>
+      </GlassPanel>
+
+      {/* Main Charts & Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left 2 Cols: Carbon Dispersion Chart */}
+        <div className="lg:col-span-2">
+          <GlassChart title="CO₂ Emission Dispersion" subtitle="Real-time CO₂ rate flow in the traffic network (measured in mg/s)">
             {emissionsHistory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={emissionsHistory}>
                   <defs>
-                    <linearGradient id="colorCo2" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#EA580C" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#EA580C" stopOpacity={0}/>
+                    <linearGradient id="colorCo2Overview" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FF8A00" stopOpacity={0.18}/>
+                      <stop offset="95%" stopColor="#FF8A00" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="time" stroke="#94A3B8" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} />
+                  <XAxis dataKey="time" stroke="#A9947D" tickLine={false} tick={{ fill: '#D6C3AE', fontSize: 9, fontFamily: 'monospace' }} />
+                  <YAxis stroke="#A9947D" tickLine={false} tick={{ fill: '#D6C3AE', fontSize: 9, fontFamily: 'monospace' }} />
                   <Tooltip 
-                    contentStyle={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "8px", fontSize: 11 }}
-                    labelStyle={{ fontWeight: "bold" }}
+                    contentStyle={{ background: "rgba(20, 15, 10, 0.90)", border: "1px solid rgba(255, 184, 77, 0.25)", borderRadius: "12px", fontSize: 11, fontFamily: 'monospace' }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="co2" 
-                    stroke="#EA580C" 
+                    stroke="#FF8A00" 
                     strokeWidth={2} 
                     fillOpacity={1} 
-                    fill="url(#colorCo2)" 
+                    fill="url(#colorCo2Overview)" 
                   />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-text-muted text-sm border-2 border-dashed border-border rounded-lg">
-                <Leaf className="h-8 w-8 text-text-muted/40 mb-2 animate-bounce" />
-                <span>Simulation not running. No live trends to display.</span>
+              <div className="h-full flex flex-col items-center justify-center text-text-muted text-xs border border-dashed border-brand-orange/15 rounded-xl font-mono">
+                <span>Synchronizing live telemetry chart...</span>
               </div>
             )}
-          </div>
+          </GlassChart>
         </div>
 
-        {/* Right 1 col: Active Hotspots & Delay Warnings */}
-        <div className="bg-white border border-border rounded-xl p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <AlertTriangle className="h-5 w-5 text-carbon-critical" />
-              <h3 className="text-base font-bold text-text-primary">Delay Alerts</h3>
+        {/* Right 1 Col: Delay alerts warnings */}
+        <GlassCard variant="large" className="flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-[rgba(255,183,106,0.12)] pb-3">
+              <AlertTriangle className="h-4.5 w-4.5 text-eco-danger" />
+              <h3 className="text-xs font-bold uppercase tracking-wider font-mono">Delay Alerts</h3>
             </div>
-            <p className="text-xs text-text-secondary mb-6">Vehicles experiencing excessive wait times (&gt;30s).</p>
+            
+            <p className="text-[11px] text-text-pale leading-normal font-sans">
+              Active vehicles experiencing grid queue delays &gt; 30 seconds.
+            </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {delayedVehicles.length > 0 ? (
                 delayedVehicles.map((v) => (
-                  <div key={v.id} className="p-3 bg-bg-secondary rounded-lg border border-border flex items-center justify-between text-xs">
+                  <div 
+                    key={v.id} 
+                    className="p-2.5 bg-[#120D09]/45 rounded-lg border border-[rgba(255,184,77,0.16)] flex items-center justify-between text-xs font-mono"
+                  >
                     <div>
-                      <div className="font-semibold text-text-primary">Vehicle ID: {v.id}</div>
-                      <div className="text-[10px] text-text-muted mt-0.5">Lane: {v.lane_id}</div>
+                      <div className="font-semibold text-text-cream">ID: {v.id}</div>
+                      <div className="text-[9px] text-text-muted mt-0.5 font-mono">LANE: {v.lane_id.split('_')[0]}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-carbon-alert">{v.waiting_time.toFixed(0)}s</div>
-                      <div className="text-[10px] text-text-muted mt-0.5">Wait time</div>
+                      <div className="font-bold text-brand-orange">{v.waiting_time.toFixed(0)}s</div>
+                      <div className="text-[9px] text-text-muted mt-0.5">WAITING</div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="py-12 text-center text-xs text-text-muted border border-dashed border-border rounded-lg">
-                  No delayed vehicles detected.
+                <div className="py-8 text-center text-xs text-text-muted border border-dashed border-[rgba(255,183,106,0.12)] rounded-lg font-mono">
+                  No delays detected in network.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="pt-6 border-t border-border mt-6 text-center text-[10px] text-text-muted">
-            Delay list updates automatically based on SUMO feedback.
+          <div className="pt-4 border-t border-[rgba(255,183,106,0.12)] text-center text-[9px] text-text-muted font-mono uppercase tracking-wider">
+            SUMO Event Loop Synchronized
           </div>
-        </div>
+        </GlassCard>
+
       </div>
     </div>
   );

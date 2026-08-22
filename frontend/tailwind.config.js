@@ -7,44 +7,32 @@ export default {
   theme: {
     extend: {
       colors: {
-        eco: {
-          forest: "#166534",
-          green: "#16A34A",
-          mint: "#22C55E",
+        brand: {
+          orange: "#FF8A00",
+          bright: "#FF9F1C",
+          amber: "#FFB84D",
+          gold: "#FFC766",
         },
-        air: {
-          clean: "#0EA5A4",
-          cyan: "#06B6D4",
-          sky: "#0EA5E9",
-        },
-        carbon: {
-          DEFAULT: "#334155",
-          dark: "#1E293B",
-          alert: "#EA580C",
-          critical: "#DC2626",
-        },
-        traffic: {
-          green: "#16A34A",
-          yellow: "#EAB308",
-          red: "#DC2626",
-        },
-        bg: {
-          DEFAULT: "#F8FAFC",
-          surface: "#FFFFFF",
-          secondary: "#F1F5F9",
+        foundation: {
+          brown: "#24150B",
+          dark: "#120D09",
+          charcoal: "#171717",
         },
         text: {
-          primary: "#0F172A",
-          secondary: "#475569",
-          muted: "#94A3B8",
+          cream: "#FFF3E5",
+          primary: "#FFF7ED",
+          secondary: "#D6C3AE",
+          muted: "#A9947D",
         },
-        border: {
-          DEFAULT: "#E2E8F0",
-          strong: "#CBD5E1",
+        eco: {
+          success: "#22C55E",
+          cyan: "#22D3EE",
+          danger: "#EF4444",
         }
       },
       fontFamily: {
-        sans: ["Inter", "Outfit", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "Inter", "Outfit", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "Fira Code", "Courier New", "monospace"],
       }
     },
   },

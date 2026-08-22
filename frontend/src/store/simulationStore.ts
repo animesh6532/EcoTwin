@@ -1,5 +1,8 @@
 import { create } from "zustand";
 import { Vehicle, TrafficLight, PollutionCell, SimulationStatus } from "../types";
+import { getVehiclesSummary } from "../api/vehicles";
+import { getCurrentEmissions } from "../api/emissions";
+import { getCurrentMetricsSnapshot } from "../api/metrics";
 
 export interface SimulationState {
   // Connection state
@@ -23,6 +26,14 @@ export interface SimulationState {
     total_co2: number;
   };
   pollution: PollutionCell[];
+
+  // Real active metrics fetched from backend endpoints
+  totalVehicles: number;
+  averageSpeed: number;
+  averageWaitingTime: number;
+  co2: number;
+  nox: number;
+  fuel: number;
 
   // Selection states
   selectedVehicleId: string | null;
@@ -48,13 +59,14 @@ export interface SimulationState {
     };
     pollution: PollutionCell[];
   }) => void;
+  fetchSimulationMetrics: () => Promise<void>;
   selectVehicle: (id: string | null) => void;
   selectIntersection: (id: string | null) => void;
   setSystemStatus: (statuses: { sumo: string; traci: string; ppo: string }) => void;
   resetState: () => void;
 }
 
-export const useSimulationStore = create<SimulationState>((set) => ({
+export const useSimulationStore = create<SimulationState>((set, get) => ({
   connectionState: "disconnected",
   
   running: false,
@@ -73,6 +85,14 @@ export const useSimulationStore = create<SimulationState>((set) => ({
     total_co2: 0,
   },
   pollution: [],
+
+  // Initial real metrics
+  totalVehicles: 0,
+  averageSpeed: 0,
+  averageWaitingTime: 0,
+  co2: 0,
+  nox: 0,
+  fuel: 0,
 
   selectedVehicleId: null,
   selectedIntersectionId: null,
@@ -101,6 +121,28 @@ export const useSimulationStore = create<SimulationState>((set) => ({
     pollution: payload.pollution,
   })),
 
+  fetchSimulationMetrics: async () => {
+    const state = get();
+    if (!state.running) return;
+    try {
+      const [summary, emissions, _metrics] = await Promise.all([
+        getVehiclesSummary(),
+        getCurrentEmissions(),
+        getCurrentMetricsSnapshot()
+      ]);
+      set({
+        totalVehicles: summary.total_vehicles,
+        averageSpeed: summary.average_speed,
+        averageWaitingTime: summary.average_waiting_time,
+        co2: emissions.co2,
+        nox: emissions.nox,
+        fuel: emissions.fuel
+      });
+    } catch (err) {
+      console.error("Failed to fetch simulation metrics:", err);
+    }
+  },
+
   selectVehicle: (id) => set({ selectedVehicleId: id }),
   selectIntersection: (id) => set({ selectedIntersectionId: id }),
 
@@ -120,6 +162,12 @@ export const useSimulationStore = create<SimulationState>((set) => ({
       total_co2: 0,
     },
     pollution: [],
+    totalVehicles: 0,
+    averageSpeed: 0,
+    averageWaitingTime: 0,
+    co2: 0,
+    nox: 0,
+    fuel: 0,
     selectedVehicleId: null,
     selectedIntersectionId: null,
   }),

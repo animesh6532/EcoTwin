@@ -1,169 +1,163 @@
 import { useQuery } from "@tanstack/react-query";
+import { getSystemHealth, getSystemReadiness } from "../api/health";
 import { useSimulationStore } from "../store/simulationStore";
-import { getSystemHealth } from "../api/health";
-import { Activity, CheckCircle2, AlertCircle, XCircle, RefreshCw } from "lucide-react";
-import { useEffect } from "react";
+import { 
+  Activity, 
+  Cpu, 
+  Database, 
+  Layers, 
+  Terminal, 
+  Radio 
+} from "lucide-react";
+import { SystemHealthResponse } from "../types";
+import { GlassCard } from "../components/glass/GlassCard";
+import { GlassStatus } from "../components/glass/GlassStatus";
 
 export default function SystemHealth() {
   const wsState = useSimulationStore();
-  
-  const { data: healthData, isLoading, error, refetch } = useQuery({
-    queryKey: ["systemHealthCheck"],
+
+  // Queries
+  const { data: healthData, isLoading: isLoadingHealth } = useQuery<SystemHealthResponse, Error>({
+    queryKey: ["systemHealth"],
     queryFn: getSystemHealth,
-    refetchInterval: 5000, // Poll every 5s
+    refetchInterval: 5000,
   });
 
-  // Sync statuses with store for header badges
-  useEffect(() => {
-    if (healthData?.components) {
-      useSimulationStore.getState().setSystemStatus({
-        sumo: healthData.components.sumo,
-        traci: healthData.components.traci,
-        ppo: healthData.components.ppo,
-      });
-    }
-  }, [healthData]);
+  const { data: readyData } = useQuery<{ status: string }, Error>({
+    queryKey: ["systemReady"],
+    queryFn: getSystemReadiness,
+    refetchInterval: 5000,
+  });
 
-  // Helper to render component status badges
-  const renderStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "healthy":
-      case "ready":
-        return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-eco-green/10 text-eco-green border border-eco-green/20">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>Healthy</span>
-          </span>
-        );
-      case "inactive":
-        return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-text-muted/10 text-text-muted border border-text-muted/20">
-            <AlertCircle className="h-3.5 w-3.5" />
-            <span>Inactive</span>
-          </span>
-        );
-      case "warning":
-        return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-traffic-yellow/10 text-traffic-yellow border border-traffic-yellow/20">
-            <AlertCircle className="h-3.5 w-3.5" />
-            <span>Warning</span>
-          </span>
-        );
-      case "error":
-      case "unavailable":
-      default:
-        return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-carbon-critical/10 text-carbon-critical border border-carbon-critical/20">
-            <XCircle className="h-3.5 w-3.5" />
-            <span>Error</span>
-          </span>
-        );
+  const getStatusColor = (status: boolean | string | undefined) => {
+    const s = typeof status === "string" ? status.toLowerCase() : status;
+    if (s === "healthy" || s === "ok" || s === "connected" || s === "running" || s === true) {
+      return "text-[#39D98A] bg-[#39D98A]/5 border-[#39D98A]/20";
     }
+    if (s === "connecting" || s === "paused" || s === "degraded") {
+      return "text-brand-amber bg-brand-amber/5 border-brand-amber/20";
+    }
+    return "text-eco-danger bg-eco-danger/5 border-eco-danger/20"; // offline / error
   };
 
-  const getWebSocketStatusText = () => {
-    switch (wsState.connectionState) {
-      case "connected":
-        return "healthy";
-      case "connecting":
-        return "warning";
-      case "error":
-        return "error";
-      case "disconnected":
-      default:
-        return "inactive";
+  const getDotColor = (status: boolean | string | undefined) => {
+    const s = typeof status === "string" ? status.toLowerCase() : status;
+    if (s === "healthy" || s === "ok" || s === "connected" || s === "running" || s === true) {
+      return "bg-[#39D98A] shadow-[0_0_8px_#39D98A]";
     }
+    if (s === "connecting") {
+      return "bg-brand-amber shadow-[0_0_8px_#FFB84D] animate-pulse";
+    }
+    if (s === "paused" || s === "degraded") {
+      return "bg-brand-amber shadow-[0_0_8px_#FFB84D]";
+    }
+    return "bg-eco-danger shadow-[0_0_8px_#FF4D4D]"; // offline
   };
 
   const components = [
     {
       id: "api",
-      name: "FastAPI Core Application Server",
-      status: error ? "error" : (healthData?.components.api ?? "inactive"),
-      description: "Handles HTTP REST routing, serves telemetry payloads, and coordinates lifecycle hooks.",
+      name: "FastAPI REST Server",
+      description: "Aggregates Pydantic simulation schemas and exposes endpoints for control overrides.",
+      status: readyData ? "healthy" : "offline",
+      icon: Cpu,
     },
     {
-      id: "database",
-      name: "Database Session Manager",
-      status: error ? "error" : (healthData?.components.database ?? "inactive"),
-      description: "Stores metrics snapshots, simulation session metadata, and historical evaluation trends.",
+      id: "db",
+      name: "SQLite Database",
+      description: "Stores historical simulation runs, step aggregate snapshots, and baseline compare histories.",
+      status: healthData?.status === "ok" ? "healthy" : "offline",
+      icon: Database,
     },
     {
       id: "sumo",
-      name: "SUMO Microscopic Traffic Engine",
-      status: error ? "error" : (healthData?.components.sumo ?? "inactive"),
-      description: "Micro-simulator running vehicle movements, lane models, and emission factors.",
+      name: "SUMO Simulator",
+      description: "Microscopic space-continuous traffic simulation engine (Eclipse SUMO).",
+      status: wsState.sumoStatus,
+      icon: Layers,
     },
     {
       id: "traci",
-      name: "TraCI TCP Client Connection Interface",
-      status: error ? "error" : (healthData?.components.traci ?? "inactive"),
-      description: "Bidirectional TCP socket interface connecting FastAPI app with active SUMO instances.",
+      name: "TraCI Connection API",
+      description: "Python-SUMO interface APIs to mutate signal phases in real-time step callbacks.",
+      status: wsState.traciStatus,
+      icon: Terminal,
     },
     {
       id: "ppo",
-      name: "PPO Policy Inference Model",
-      status: error ? "error" : (healthData?.components.ppo ?? "inactive"),
-      description: "Loads the trained stable-baselines3 policy model checkpoint for traffic optimization.",
+      name: "PPO Policy Neural Model",
+      description: "Trained Proximal Policy Optimization reinforcement learning controller.",
+      status: wsState.ppoStatus,
+      icon: Activity,
     },
     {
-      id: "websocket",
-      name: "WebSocket State Update Broker",
-      status: getWebSocketStatusText(),
-      description: "Pushes high-speed live simulation frame state updates to connected dashboard clients.",
+      id: "ws",
+      name: "WebSocket Streaming",
+      description: "Event-loop stream pushing state telemetry frames from backend simulation steps.",
+      status: wsState.connectionState,
+      icon: Radio,
     },
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in text-text-cream">
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-primary">System Health Diagnostics</h1>
-          <p className="text-text-secondary text-sm mt-1">
-            Real-time status monitoring of microscopic simulator layers, models, and databases.
+          <h1 className="text-3xl font-black tracking-tight uppercase font-sans">System Diagnostics</h1>
+          <p className="text-text-pale text-xs mt-1">
+            Monitor diagnostics and connectivity for all services in the EcoTwin pipeline.
           </p>
         </div>
-
-        <button
-          onClick={() => refetch()}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-bg-secondary text-text-primary border border-border shadow-sm rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-          <span>Refresh check</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <GlassStatus label="SYSTEM READY" status={readyData ? "online" : "offline"} />
+        </div>
       </div>
 
-      {error && (
-        <div className="bg-carbon-critical/5 border border-carbon-critical/20 rounded-xl p-4 text-xs text-carbon-critical flex items-center gap-2 max-w-xl mx-auto">
-          <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>Cannot query health endpoints. Please check if the FastAPI backend server is running on http://127.0.0.1:8000.</span>
+      {isLoadingHealth ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="h-44 bg-[#050505]/45 rounded-xl shimmer animate-pulse" />
+          <div className="h-44 bg-[#050505]/45 rounded-xl shimmer animate-pulse" />
+          <div className="h-44 bg-[#050505]/45 rounded-xl shimmer animate-pulse" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {components.map((c) => {
+            const Icon = c.icon;
+            const statusClass = getStatusColor(c.status);
+            const dotClass = getDotColor(c.status);
+
+            return (
+              <GlassCard 
+                key={c.id} 
+                variant="status" 
+                className="flex flex-col justify-between h-48 border border-[rgba(255,183,106,0.12)] font-mono text-xs"
+              >
+                <div>
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                    <span className="text-[11px] font-bold text-text-cream uppercase tracking-wide">{c.name}</span>
+                    <Icon className="h-4 w-4 text-text-muted" />
+                  </div>
+                  <p className="text-[11px] text-text-pale font-sans leading-relaxed mt-2.5 font-normal">
+                    {c.description}
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center border-t border-[rgba(255,183,106,0.08)] pt-2.5 mt-4 text-[9px] uppercase tracking-widest font-bold">
+                  <div className="flex items-center gap-1.5 text-text-muted">
+                    <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
+                    <span>Diagnostics</span>
+                  </div>
+                  
+                  <span className={`px-2 py-0.5 rounded font-bold uppercase ${statusClass}`}>
+                    {c.status}
+                  </span>
+                </div>
+              </GlassCard>
+            );
+          })}
         </div>
       )}
-
-      {/* Grid of Components health */}
-      <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-border bg-bg-secondary flex items-center gap-2">
-          <Activity className="h-4.5 w-4.5 text-eco-green" />
-          <h3 className="text-xs font-bold text-text-primary uppercase tracking-wider">Health Diagnostics Dashboard</h3>
-        </div>
-
-        <div className="divide-y divide-border">
-          {components.map((comp) => (
-            <div key={comp.id} className="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:bg-bg-secondary/20 transition-colors">
-              <div className="space-y-1 md:max-w-2xl">
-                <h4 className="font-bold text-text-primary text-sm">{comp.name}</h4>
-                <p className="text-xs text-text-secondary leading-relaxed">{comp.description}</p>
-              </div>
-              
-              <div className="shrink-0">
-                {renderStatusBadge(comp.status)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
