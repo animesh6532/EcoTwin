@@ -7,49 +7,51 @@ import {
   Activity, 
   Droplet,
   AlertTriangle,
-  Play
+  Play,
+  Layers,
+  Terminal,
+  Radio,
+  Cpu
 } from "lucide-react";
 import { 
   ResponsiveContainer, 
-  LineChart, 
-  Line, 
   AreaChart, 
   Area, 
   XAxis, 
   YAxis, 
   Tooltip 
 } from "recharts";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { startSimulation, resumeSimulation, getSimulationStatus } from "../api/simulation";
 import { toast } from "../utils/toast";
 import { webSocketService } from "../services/websocket";
+import L from "leaflet";
+import { GlassCard } from "../components/glass/GlassCard";
+import { GlassPanel } from "../components/glass/GlassPanel";
+import { GlassButton } from "../components/glass/GlassButton";
+import { GlassMetric } from "../components/glass/GlassMetric";
+import { GlassChart } from "../components/glass/GlassChart";
+import { GlassStatus } from "../components/glass/GlassStatus";
+import { GlassTable } from "../components/glass/GlassTable";
 
-// Tiny helper to generate sparkline telemetry data
-const generateSparklineData = (currentVal: number, seed = 0.5) => {
-  return Array.from({ length: 10 }, (_, i) => ({
-    val: currentVal * (0.85 + Math.sin(i + seed) * 0.15 + (i * 0.01))
-  }));
-};
+const CENTER_LAT = 52.5200;
+const CENTER_LNG = 13.4050;
+
+function sumoToLatLng(x: number, y: number): [number, number] {
+  const lat = CENTER_LAT + (y / 111320);
+  const lng = CENTER_LNG + (x / (111320 * Math.cos(CENTER_LAT * Math.PI / 180)));
+  return [lat, lng];
+}
 
 export default function Overview() {
   const wsState = useSimulationStore();
-  
-  // Keep a small history for the emissions chart
   const [emissionsHistory, setEmissionsHistory] = useState<{ time: string; co2: number }[]>([]);
-
-  useEffect(() => {
-    if (wsState.running && wsState.co2 > 0) {
-      setEmissionsHistory((prev) => {
-        const timeStr = `${wsState.simulationTime.toFixed(0)}s`;
-        if (prev.length > 0 && prev[prev.length - 1].time === timeStr) {
-          return prev;
-        }
-        const next = [...prev, { time: timeStr, co2: wsState.co2 }];
-        return next.slice(-20); // Keep last 20 frames
-      });
-    }
-  }, [wsState.simulationTime, wsState.co2, wsState.running]);
+  
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<Record<string, L.CircleMarker>>({});
+  const signalsRef = useRef<Record<string, L.CircleMarker>>({});
 
   // Start simulation mutation
   const startMutation = useMutation({
@@ -81,204 +83,287 @@ export default function Overview() {
     }
   });
 
-  const getDotColor = (status: boolean | string | undefined) => {
-    if (status === true || status === "healthy" || status === "ok" || status === "connected") {
-      return "bg-[#FF8A00] shadow-[0_0_8px_#FF8A00]";
+  // Maintain emissions history
+  useEffect(() => {
+    if (wsState.running && wsState.co2 > 0) {
+      setEmissionsHistory((prev) => {
+        const timeStr = `${wsState.simulationTime.toFixed(0)}s`;
+        if (prev.length > 0 && prev[prev.length - 1].time === timeStr) {
+          return prev;
+        }
+        const next = [...prev, { time: timeStr, co2: wsState.co2 }];
+        return next.slice(-20);
+      });
     }
-    return "bg-[#7A6A5C]";
+  }, [wsState.simulationTime, wsState.co2, wsState.running]);
+
+  // Telemetry map rendering
+  useEffect(() => {
+    if (!wsState.running || !mapRef.current || mapInstanceRef.current) return;
+
+    const map = L.map(mapRef.current, {
+      zoomControl: false,
+      attributionControl: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      dragging: false,
+      maxZoom: 17,
+      minZoom: 15,
+    }).setView([CENTER_LAT, CENTER_LNG], 16.5);
+
+    // Dark Matter Map Tiles
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 20
+    }).addTo(map);
+
+    // Road lines
+    const lineOptions = { color: "#3A2110", weight: 6, opacity: 0.5 };
+    L.polyline([sumoToLatLng(0, -500), sumoToLatLng(0, 500)], lineOptions).addTo(map);
+    L.polyline([sumoToLatLng(-500, 0), sumoToLatLng(500, 0)], lineOptions).addTo(map);
+
+    // Junction box
+    L.rectangle([sumoToLatLng(-22, -22), sumoToLatLng(22, 22)], {
+      color: "#FF8A00",
+      weight: 1,
+      fillColor: "#FF8A00",
+      fillOpacity: 0.05,
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      markersRef.current = {};
+      signalsRef.current = {};
+    };
+  }, [wsState.running]);
+
+  // Update vehicle markers
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const activeIds = new Set(wsState.vehicles.map((v) => v.id));
+
+    // Remove old
+    Object.keys(markersRef.current).forEach((id) => {
+      if (!activeIds.has(id)) {
+        markersRef.current[id].remove();
+        delete markersRef.current[id];
+      }
+    });
+
+    // Draw active
+    wsState.vehicles.forEach((v) => {
+      const latlng = sumoToLatLng(v.x, v.y);
+      let marker = markersRef.current[v.id];
+
+      let markerColor = "#FF8A00";
+      if (v.id.includes("electric")) markerColor = "#FFE7CC";
+      else if (v.id.includes("truck")) markerColor = "#E06C00";
+
+      if (!marker) {
+        marker = L.circleMarker(latlng, {
+          radius: 3.5,
+          fillColor: markerColor,
+          fillOpacity: 0.95,
+          color: "#050505",
+          weight: 1,
+        }).addTo(map);
+        markersRef.current[v.id] = marker;
+      } else {
+        marker.setLatLng(latlng);
+      }
+    });
+  }, [wsState.vehicles]);
+
+  // Update signals
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    wsState.trafficLights.forEach((tls) => {
+      const pos = sumoToLatLng(0, 0);
+      let signalMarker = signalsRef.current[tls.id];
+
+      const isGreen = tls.active_phase === 0 || tls.active_phase === 2;
+      const isYellow = tls.active_phase === 1 || tls.active_phase === 3;
+      const signalColor = isGreen ? "#39D98A" : isYellow ? "#FFB84D" : "#FF4D4D";
+
+      if (!signalMarker) {
+        signalMarker = L.circleMarker(pos, {
+          radius: 6,
+          fillColor: signalColor,
+          fillOpacity: 0.95,
+          color: "#050505",
+          weight: 1.5,
+        }).addTo(map);
+        signalsRef.current[tls.id] = signalMarker;
+      } else {
+        signalMarker.setStyle({ fillColor: signalColor });
+      }
+    });
+  }, [wsState.trafficLights]);
+
+  // Congestion calculation
+  const getCongestionRate = () => {
+    if (!wsState.running || wsState.totalVehicles === 0) return 0;
+    const slowVehicles = wsState.vehicles.filter((v) => v.speed < 10).length;
+    return (slowVehicles / wsState.totalVehicles) * 100;
   };
 
-  // Stopped state UI overlay (Premium Onboarding State)
+  // Simulation Inactive state (Redesigned Onboarding)
   if (!wsState.running) {
     return (
-      <div className="space-y-8 animate-fade-in flex flex-col items-center justify-center min-h-[calc(100vh-16rem)]">
-        <div className="glass-panel max-w-xl w-full p-12 text-center shadow-2xl border border-[#75451A]/30 space-y-8">
-          <Leaf className="h-12 w-12 text-[#FF8A00] mx-auto animate-pulse" />
+      <div className="space-y-8 animate-fade-in flex flex-col items-center justify-center min-h-[calc(100vh-14rem)]">
+        <GlassPanel className="max-w-xl w-full text-center space-y-6">
+          <div className="relative flex items-center justify-center h-12 w-12 mx-auto">
+            <div className="absolute inset-0 bg-brand-orange/20 blur-lg rounded-full" />
+            <Leaf className="h-8 w-8 text-brand-orange relative z-10 animate-pulse" />
+          </div>
           
           <div className="space-y-2">
-            <h3 className="font-bold text-2xl text-[#FFF3E5] tracking-wide uppercase font-sans">
-              OPERATIONS COMMAND INACTIVE
+            <h3 className="font-bold text-xl text-text-cream tracking-widest uppercase font-mono">
+              DIGITAL TWIN OFFLINE
             </h3>
-            <p className="text-[#FFD2A3] text-sm leading-relaxed max-w-sm mx-auto">
-              Start a SUMO session to activate the digital twin.
+            <p className="text-text-pale text-xs leading-relaxed max-w-sm mx-auto">
+              Start a SUMO simulation to activate live traffic intelligence and dynamic emissions profiling.
             </p>
           </div>
 
           <div className="pt-2">
-            <button
+            <GlassButton
+              variant="primary"
+              size="lg"
               onClick={() => startMutation.mutate()}
               disabled={startMutation.isPending}
-              className="glass-button-accent text-sm tracking-widest px-8 py-3.5 rounded-full hover:scale-105 duration-200 uppercase font-bold flex items-center gap-2 mx-auto"
+              className="mx-auto uppercase tracking-widest text-xs"
             >
-              <Play className="h-4 w-4 fill-black" />
-              <span>{startMutation.isPending ? "Starting..." : "Start Simulation"}</span>
-            </button>
+              <Play className="h-4.5 w-4.5 fill-current" />
+              <span>{startMutation.isPending ? "Configuring..." : "Start Simulation"}</span>
+            </GlassButton>
           </div>
 
-          {/* System states indicators inside onboarding */}
-          <div className="border-t border-[#75451A]/20 pt-6 flex justify-center gap-8 text-[10px] font-mono uppercase tracking-wider text-[#9A8575]">
+          {/* Quick status grids */}
+          <div className="border-t border-[rgba(255,183,106,0.12)] pt-6 flex justify-center gap-6 text-[10px] font-mono uppercase tracking-wider text-text-muted">
             <div className="flex items-center gap-1.5">
-              <span className={`h-1.5 w-1.5 rounded-full ${getDotColor(wsState.sumoStatus)}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${wsState.sumoStatus === "healthy" ? "bg-[#39D98A]" : "bg-[#8D7868]/45"}`} />
               <span>SUMO</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className={`h-1.5 w-1.5 rounded-full ${getDotColor(wsState.traciStatus)}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${wsState.traciStatus === "healthy" ? "bg-[#39D98A]" : "bg-[#8D7868]/45"}`} />
               <span>TraCI</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className={`h-1.5 w-1.5 rounded-full ${getDotColor(wsState.ppoStatus)}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${wsState.ppoStatus === "healthy" ? "bg-[#39D98A]" : "bg-[#8D7868]/45"}`} />
               <span>PPO</span>
             </div>
           </div>
-        </div>
+        </GlassPanel>
       </div>
     );
   }
 
-  // Live KPI elements mapping
-  const kpis = [
-    {
-      id: "vehicles",
-      title: "Active Vehicles",
-      value: wsState.totalVehicles,
-      unit: "qty",
-      icon: Users,
-      color: "text-[#FFA347]",
-      sparkColor: "#FFA347",
-    },
-    {
-      id: "speed",
-      title: "Average Speed",
-      value: wsState.averageSpeed.toFixed(1),
-      unit: "km/h",
-      icon: Gauge,
-      color: "text-[#FFD2A3]",
-      sparkColor: "#FFD2A3",
-    },
-    {
-      id: "waiting",
-      title: "Avg Waiting Time",
-      value: wsState.averageWaitingTime.toFixed(1),
-      unit: "sec",
-      icon: Clock,
-      color: "text-[#FFB84D]",
-      sparkColor: "#FFB84D",
-    },
-    {
-      id: "co2",
-      title: "CO₂ Emission Rate",
-      value: (wsState.co2 / 1000).toFixed(2), // convert mg to grams
-      unit: "g/s",
-      icon: Leaf,
-      color: "text-[#FF8A00]",
-      sparkColor: "#FF8A00",
-    },
-    {
-      id: "nox",
-      title: "NOx Emission Rate",
-      value: (wsState.nox / 1000).toFixed(2),
-      unit: "g/s",
-      icon: Activity,
-      color: "text-[#E06C00]",
-      sparkColor: "#E06C00",
-    },
-    {
-      id: "fuel",
-      title: "Fuel Consumption",
-      value: (wsState.fuel / 1000).toFixed(2), // convert ml to Liters
-      unit: "L/s",
-      icon: Droplet,
-      color: "text-[#FFE7CC]",
-      sparkColor: "#FFE7CC",
-    },
+  // Active metrics mapping
+  const metricsList = [
+    { label: "Active Vehicles", value: wsState.totalVehicles, unit: "qty", icon: Users },
+    { label: "Average Speed", value: `${wsState.averageSpeed.toFixed(1)}`, unit: "km/h", icon: Gauge },
+    { label: "Avg Waiting Time", value: `${wsState.averageWaitingTime.toFixed(1)}`, unit: "sec", icon: Clock },
+    { label: "Congestion Index", value: `${getCongestionRate().toFixed(1)}`, unit: "%", icon: Activity },
   ];
 
-  // List of high-wait delayed vehicles
   const delayedVehicles = wsState.vehicles
     .filter((v) => v.waiting_time > 30)
     .sort((a, b) => b.waiting_time - a.waiting_time)
-    .slice(0, 5);
+    .slice(0, 4);
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#FFF3E5]">
+    <div className="space-y-8 animate-fade-in text-text-cream">
+      
       {/* Title Header */}
-      <div>
-        <h1 className="text-3xl font-black tracking-tight uppercase font-sans">Operations Command Center</h1>
-        <p className="text-[#FFD2A3] text-sm mt-1">
-          Real-time urban carbon intelligence and traffic signal telemetry.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight uppercase font-sans">ECOTWIN OPERATIONS</h1>
+          <p className="text-text-pale text-xs mt-1">
+            Real-time urban mobility and environmental intelligence.
+          </p>
+        </div>
+        
+        {/* Top Mini status bar */}
+        <div className="flex flex-wrap items-center gap-3">
+          <GlassStatus label="SYS STATE" status="RUNNING" />
+          <GlassStatus label="CONNECTION" status={wsState.connectionState === "connected" ? "connected" : "connecting"} />
+          <GlassStatus label="CONTROLLER" status={wsState.controller === "ppo" ? "PPO RL" : "Fixed-Time"} />
+        </div>
       </div>
 
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {kpis.map((kpi) => {
-          const Icon = kpi.icon;
-          const sparkData = generateSparklineData(Number(kpi.value), kpi.title.length);
-
-          return (
-            <div key={kpi.id} className="glass-panel glass-panel-hover p-6 flex flex-col justify-between h-48 border border-[#75451A]/20 shadow-2xl">
-              <div>
-                <div className="flex justify-between items-center text-[#9A8575]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider font-mono">{kpi.title}</span>
-                  <Icon className={`h-5 w-5 ${kpi.color}`} />
-                </div>
-                
-                <div className="mt-4 flex items-baseline gap-2">
-                  <span className="text-3xl font-black tracking-tight text-[#FFE7CC] font-mono">
-                    {kpi.value}
-                  </span>
-                  <span className="text-[11px] text-[#9A8575] font-bold uppercase font-mono">{kpi.unit}</span>
-                </div>
-              </div>
-
-              {/* Sparkline & trend info */}
-              <div className="mt-6 flex items-center justify-between border-t border-[#75451A]/10 pt-3">
-                <span className="text-[9px] font-mono uppercase text-[#9A8575]">Live Stream</span>
-
-                {/* Micro Sparkline */}
-                <div className="h-8 w-24">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sparkData}>
-                      <Line 
-                        type="monotone" 
-                        dataKey="val" 
-                        stroke={kpi.sparkColor} 
-                        strokeWidth={1.5} 
-                        dot={false} 
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Main Charts & Notifications section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 cols: Live CO2 Emission flow */}
-        <div className="lg:col-span-2 glass-panel p-6 border border-[#75451A]/20 shadow-2xl flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold uppercase tracking-wider font-mono mb-1">CO₂ Emission Dispersion</h3>
-            <p className="text-xs text-[#FFD2A3] mb-6">Real-time CO₂ rate flow in the traffic network (measured in mg/s).</p>
+      {/* Hero Telemetry Panel Redesign */}
+      <GlassPanel className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+        
+        {/* Left Side: Dynamic Metrics stack */}
+        <div className="flex flex-col justify-between gap-4">
+          <div className="space-y-2 pb-2 border-b border-[rgba(255,183,106,0.12)]">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-text-muted font-bold block">Live Telemetry Stats</span>
+            <h2 className="text-sm font-bold uppercase font-mono">Operations Feed</h2>
           </div>
           
-          <div className="h-64">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+            {metricsList.map((m, idx) => (
+              <GlassMetric
+                key={idx}
+                title={m.label}
+                value={m.value}
+                unit={m.unit}
+                icon={m.icon}
+                color="text-brand-orange"
+                className="bg-[#050505]/45 border-[rgba(255,183,106,0.1)]"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Center / Right: Live digital twin tracking viewport */}
+        <div className="lg:col-span-2 relative rounded-[18px] overflow-hidden border border-brand-orange/15 min-h-[300px] flex flex-col justify-between">
+          {/* Map wrapper */}
+          <div ref={mapRef} className="absolute inset-0 z-0 bg-[#050505]" />
+          
+          {/* Scanline atmospheric overlays */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.18)_50%)] bg-[size:100%_4px] pointer-events-none z-10 opacity-30" />
+          
+          {/* Viewport overlay labels */}
+          <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-[#050505]/85 border border-brand-orange/20 rounded-md font-mono text-[9px] uppercase tracking-widest text-brand-amber flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-brand-orange animate-ping" />
+            Live digital twin map
+          </div>
+          
+          <div className="absolute bottom-4 right-4 z-20 px-3 py-1 bg-[#050505]/85 border border-white/5 rounded-md font-mono text-[9px] uppercase tracking-widest text-text-muted">
+            SIMULATION STEP: {(wsState.simulationTime).toFixed(0)}s
+          </div>
+        </div>
+      </GlassPanel>
+
+      {/* Main Charts & Alerts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left 2 Cols: Carbon Dispersion Chart */}
+        <div className="lg:col-span-2">
+          <GlassChart title="CO₂ Emission Dispersion" subtitle="Real-time CO₂ rate flow in the traffic network (measured in mg/s)">
             {emissionsHistory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={emissionsHistory}>
                   <defs>
-                    <linearGradient id="colorCo2" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FF8A00" stopOpacity={0.15}/>
+                    <linearGradient id="colorCo2Overview" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#FF8A00" stopOpacity={0.18}/>
                       <stop offset="95%" stopColor="#FF8A00" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="time" stroke="#555" tickLine={false} tick={{ fill: '#9A8575', fontSize: 9, fontFamily: 'monospace' }} />
-                  <YAxis stroke="#555" tickLine={false} tick={{ fill: '#9A8575', fontSize: 9, fontFamily: 'monospace' }} />
+                  <XAxis dataKey="time" stroke="#4A2810" tickLine={false} tick={{ fill: '#8D7868', fontSize: 9, fontFamily: 'monospace' }} />
+                  <YAxis stroke="#4A2810" tickLine={false} tick={{ fill: '#8D7868', fontSize: 9, fontFamily: 'monospace' }} />
                   <Tooltip 
-                    contentStyle={{ background: "#11100E", border: "1px solid rgba(255,163,71,0.15)", borderRadius: "8px", fontSize: 11 }}
-                    labelStyle={{ fontWeight: "bold" }}
+                    contentStyle={{ background: "#080706", border: "1px solid rgba(255,183,106,0.18)", borderRadius: "12px", fontSize: 11, fontFamily: 'monospace' }}
                   />
                   <Area 
                     type="monotone" 
@@ -286,53 +371,60 @@ export default function Overview() {
                     stroke="#FF8A00" 
                     strokeWidth={2} 
                     fillOpacity={1} 
-                    fill="url(#colorCo2)" 
+                    fill="url(#colorCo2Overview)" 
                   />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center text-[#9A8575] text-xs border border-dashed border-[#75451A]/20 rounded-lg">
-                <span>Waiting for simulation telemetry...</span>
+              <div className="h-full flex flex-col items-center justify-center text-text-muted text-xs border border-dashed border-brand-orange/15 rounded-xl font-mono">
+                <span>Synchronizing live telemetry chart...</span>
               </div>
             )}
-          </div>
+          </GlassChart>
         </div>
 
-        {/* Right 1 col: Active Hotspots & Delay Warnings */}
-        <div className="glass-panel p-6 border border-[#75451A]/20 shadow-2xl flex flex-col justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1 border-b border-[#75451A]/10 pb-3">
-              <AlertTriangle className="h-4.5 w-4.5 text-[#FF4D4D]" />
-              <h3 className="text-sm font-bold uppercase tracking-wider font-mono">Delay Alerts</h3>
+        {/* Right 1 Col: Delay alerts warnings */}
+        <GlassCard variant="large" className="flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 border-b border-[rgba(255,183,106,0.12)] pb-3">
+              <AlertTriangle className="h-4.5 w-4.5 text-eco-danger" />
+              <h3 className="text-xs font-bold uppercase tracking-wider font-mono">Delay Alerts</h3>
             </div>
-            <p className="text-xs text-[#FFD2A3] mb-6">Vehicles experiencing excessive wait times (&gt;30s).</p>
+            
+            <p className="text-[11px] text-text-pale leading-normal font-sans">
+              Active vehicles experiencing grid queue delays &gt; 30 seconds.
+            </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {delayedVehicles.length > 0 ? (
                 delayedVehicles.map((v) => (
-                  <div key={v.id} className="p-3 bg-white/5 rounded-lg border border-white/5 flex items-center justify-between text-xs font-mono">
+                  <div 
+                    key={v.id} 
+                    className="p-2.5 bg-[#050505]/45 rounded-lg border border-[rgba(255,183,106,0.1)] flex items-center justify-between text-xs font-mono"
+                  >
                     <div>
-                      <div className="font-semibold text-text-primary">ID: {v.id}</div>
-                      <div className="text-[9px] text-[#9A8575] mt-0.5">Lane: {v.lane_id}</div>
+                      <div className="font-semibold text-text-cream">ID: {v.id}</div>
+                      <div className="text-[9px] text-text-muted mt-0.5 font-mono">LANE: {v.lane_id.split('_')[0]}</div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-[#FF8A00]">{v.waiting_time.toFixed(0)}s</div>
-                      <div className="text-[9px] text-[#9A8575] mt-0.5">Wait</div>
+                      <div className="font-bold text-brand-orange">{v.waiting_time.toFixed(0)}s</div>
+                      <div className="text-[9px] text-text-muted mt-0.5">WAITING</div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="py-12 text-center text-xs text-[#9A8575] border border-dashed border-[#75451A]/20 rounded-lg">
-                  No delayed vehicles detected.
+                <div className="py-8 text-center text-xs text-text-muted border border-dashed border-[rgba(255,183,106,0.12)] rounded-lg font-mono">
+                  No delays detected in network.
                 </div>
               )}
             </div>
           </div>
 
-          <div className="pt-6 border-t border-[#75451A]/10 mt-6 text-center text-[9px] text-[#9A8575] font-mono uppercase tracking-wider">
-            Auto-Sync Active (SUMO)
+          <div className="pt-4 border-t border-[rgba(255,183,106,0.12)] text-center text-[9px] text-text-muted font-mono uppercase tracking-wider">
+            SUMO Event Loop Synchronized
           </div>
-        </div>
+        </GlassCard>
+
       </div>
     </div>
   );

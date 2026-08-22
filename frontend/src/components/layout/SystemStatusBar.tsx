@@ -14,67 +14,80 @@ export default function SystemStatusBar() {
     ppoStatus,
   } = useSimulationStore();
 
-  // API status check
+  // REST API status query
   const { data: isReady } = useQuery<{ status: string }, Error>({
     queryKey: ["apiReady"],
     queryFn: getSystemReadiness,
-    refetchInterval: 10000, // check every 10s
+    refetchInterval: 10000,
   });
 
   const getStatusColor = (status: "healthy" | "unavailable" | "inactive" | boolean | string) => {
-    if (status === "healthy" || status === true || status === "connected") return "bg-[#FF8A00] shadow-[0_0_8px_#FF8A00]";
-    if (status === "connecting") return "bg-[#FFA347] shadow-[0_0_8px_#FFA347] animate-pulse";
-    if (status === "paused") return "bg-[#FFB84D] shadow-[0_0_8px_#FFB84D]";
-    if (status === "error") return "bg-[#FF4D4D] shadow-[0_0_8px_#FF4D4D]";
-    return "bg-[#7A6A5C]"; // offline / inactive
+    const s = typeof status === "string" ? status.toLowerCase() : status;
+    if (s === "healthy" || s === true || s === "connected" || s === "running") {
+      return "bg-[#39D98A] shadow-[0_0_8px_#39D98A]"; // Healthy green
+    }
+    if (s === "connecting") {
+      return "bg-[#FFB84D] shadow-[0_0_8px_#FFB84D] animate-pulse"; // Transition Warning
+    }
+    if (s === "paused" || s === "degraded") {
+      return "bg-[#FFB84D] shadow-[0_0_8px_#FFB84D]"; // Warning
+    }
+    if (s === "error" || s === "unavailable" || s === "offline") {
+      return "bg-[#FF4D4D] shadow-[0_0_8px_#FF4D4D]"; // Error Red
+    }
+    return "bg-[#8D7868]/45"; // Inactive / Offline Gray
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-6 text-[10px] font-mono tracking-wider text-[#FFD2A3] select-none">
+    <div className="flex flex-wrap items-center gap-6 text-[10px] font-mono tracking-wider text-text-pale select-none">
       {/* Simulation Clocks */}
       {running && (
         <div className="flex items-center gap-4 border-r border-white/10 pr-6">
-          <div>
-            STATUS:{" "}
-            <span className={`font-bold uppercase ${paused ? "text-[#FFB84D]" : "text-[#FFA347] animate-pulse"}`}>
-              {paused ? "PAUSED" : "RUNNING"}
+          <div className="flex items-center gap-1">
+            <span className="text-text-muted">STATE:</span>
+            <span className={`font-bold uppercase ${paused ? "text-brand-amber" : "text-brand-orange animate-pulse"}`}>
+              {paused ? "PAUSED" : "ACTIVE RUN"}
             </span>
           </div>
-          <div>
-            TIME:{" "}
-            <span className="font-bold text-[#FFF3E5]">
+          <div className="flex items-center gap-1">
+            <span className="text-text-muted">TIME:</span>
+            <span className="font-bold text-text-cream bg-white/5 px-2 py-0.5 rounded border border-white/5">
               {simulationTime.toFixed(1)}s
             </span>
           </div>
-          <div>
-            CTRL:{" "}
-            <span className={`font-bold uppercase ${controller === "ppo" ? "text-[#FFA347] animate-pulse" : "text-[#FFF3E5]"}`}>
-              {controller === "ppo" ? "PPO RL" : "FIXED-TIME"}
+          <div className="flex items-center gap-1">
+            <span className="text-text-muted">CNTRL:</span>
+            <span className={`font-bold uppercase px-1.5 py-0.5 rounded ${
+              controller === "ppo" 
+                ? "text-brand-orange bg-brand-orange/10 border border-brand-orange/20 animate-pulse" 
+                : "text-text-cream bg-white/5 border border-white/10"
+            }`}>
+              {controller === "ppo" ? "PPO Agent" : "Fixed-Time"}
             </span>
           </div>
         </div>
       )}
 
       {/* Services Status Dots */}
-      <div className="flex items-center gap-4 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${getStatusColor(!!isReady)}`} />
+      <div className="flex items-center gap-4 shrink-0 font-mono text-[9px] font-bold tracking-widest text-text-muted">
+        <div className="flex items-center gap-2">
+          <span className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${getStatusColor(!!isReady)}`} />
           <span>API</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${getStatusColor(sumoStatus)}`} />
+        <div className="flex items-center gap-2">
+          <span className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${getStatusColor(sumoStatus)}`} />
           <span>SUMO</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${getStatusColor(traciStatus)}`} />
+        <div className="flex items-center gap-2">
+          <span className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${getStatusColor(traciStatus)}`} />
           <span>TRACI</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${getStatusColor(ppoStatus)}`} />
+        <div className="flex items-center gap-2">
+          <span className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${getStatusColor(ppoStatus)}`} />
           <span>PPO</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${getStatusColor(connectionState)}`} />
+        <div className="flex items-center gap-2">
+          <span className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${getStatusColor(connectionState)}`} />
           <span>WS</span>
         </div>
       </div>

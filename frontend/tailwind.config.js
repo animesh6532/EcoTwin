@@ -7,44 +7,39 @@ export default {
   theme: {
     extend: {
       colors: {
-        eco: {
-          forest: "#3A2110", // Dark Brown Accent
-          green: "#FF8A00",  // Primary Brand Orange
-          mint: "#FFB84D",   // Amber (used for active status/telemetry highlight)
+        brand: {
+          orange: "#FF8A00",
+          bright: "#FF9D24",
+          light: "#FFA347",
+          amber: "#FFB84D",
+          amberGlow: "#FFC76A",
         },
-        air: {
-          clean: "#FFD2A3",  // Light Peach
-          cyan: "#FFA347",   // Bright Orange
-          sky: "#E06C00",    // Burnt Orange
-        },
-        carbon: {
-          DEFAULT: "#11100E", // Dark Foundation Soft Card
-          dark: "#0D0B09",   // Dark Foundation Soft Background
-          alert: "#FF8A00",  // Primary Orange
-          critical: "#FF4D4D",
-        },
-        traffic: {
-          green: "#39D98A",   // Semantic Traffic Light Green
-          yellow: "#FFB84D",  // Semantic Traffic Light Yellow
-          red: "#FF4D4D",     // Semantic Traffic Light Red
-        },
-        bg: {
-          DEFAULT: "#090909",
-          surface: "rgba(30, 18, 12, 0.68)",
-          secondary: "#0D0B09",
+        foundation: {
+          dark: "#050505",
+          soft: "#080706",
+          brown: "#0D0A08",
+          warm: "#120D09",
+          panel: "#18110B",
+          c1: "#2A170C",
+          c2: "#3A2110",
+          c3: "#512A0D",
         },
         text: {
-          primary: "#FFF3E5",
-          secondary: "#FFD2A3",
-          muted: "#9A8575",
+          cream: "#FFF3E5",
+          peach: "#FFE7CC",
+          pale: "#FFD2A3",
+          muted: "#B89B82",
+          dim: "#8D7868",
         },
-        border: {
-          DEFAULT: "rgba(255, 210, 163, 0.12)",
-          strong: "rgba(255, 210, 163, 0.22)",
+        eco: {
+          success: "#39D98A",
+          danger: "#FF4D4D",
+          warning: "#FFB84D",
         }
       },
       fontFamily: {
-        sans: ["Inter", "Outfit", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "Inter", "Outfit", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "Fira Code", "Courier New", "monospace"],
       }
     },
   },

@@ -1,59 +1,53 @@
 @import "leaflet/dist/leaflet.css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Centralized EcoTwin Design Tokens */
+/* Centralized EcoTwin Redesign Tokens */
 :root {
   color-scheme: dark;
   
-  --ecotwin-bg: #090909;
-  --ecotwin-bg-soft: #0D0B09;
-  --ecotwin-bg-card: #11100E;
-  --ecotwin-bg-panel: #17120F;
-  --ecotwin-bg-hover: #20150F;
-  --ecotwin-bg-strong: #2A1A10;
-
-  --ecotwin-brown-dark: #3A2110;
-  --ecotwin-brown: #4A2810;
-  --ecotwin-brown-light: #5A3214;
-  --ecotwin-brown-border: #75451A;
-
-  --ecotwin-burnt: #E06C00;
+  --ecotwin-bg: #050505;
+  --ecotwin-bg-glass: rgba(18, 12, 8, 0.48);
+  --ecotwin-border-glass: rgba(255, 183, 106, 0.15);
+  
   --ecotwin-orange: #FF8A00;
-  --ecotwin-orange-light: #FFA347;
+  --ecotwin-orange-glow: rgba(255, 138, 0, 0.15);
   --ecotwin-amber: #FFB84D;
-
   --ecotwin-peach: #FFD2A3;
-  --ecotwin-peach-pale: #FFE7CC;
   --ecotwin-cream: #FFF3E5;
-
-  --ecotwin-text: #FFF3E5;
-  --ecotwin-muted: #9A8575;
-
+  
+  --ecotwin-muted: #8D7868;
+  --ecotwin-muted-text: #B89B82;
+  
   --ecotwin-success: #39D98A;
   --ecotwin-danger: #FF4D4D;
-  
-  /* sepia warm dark-matter leaflet basemap filter */
-  --leaflet-tile-filter: grayscale(0.75) invert(0.95) contrast(1.15) brightness(0.65) sepia(0.55) hue-rotate(330deg);
+  --ecotwin-warning: #FFB84D;
+
+  /* Premium warm dark-matter leaflet basemap filter */
+  --leaflet-tile-filter: grayscale(0.85) invert(0.95) contrast(1.15) brightness(0.60) sepia(0.50) hue-rotate(330deg);
 }
 
 body {
-  @apply bg-[#090909] text-text-primary antialiased selection:bg-[#FF8A00]/25 selection:text-white font-sans;
-  background-color: #090909;
+  @apply antialiased selection:bg-[#FF8A00]/25 selection:text-white;
+  background-color: #050505;
+  font-family: 'Plus Jakarta Sans', 'Inter', 'Outfit', sans-serif;
+  color: var(--ecotwin-cream);
+  overflow-x: hidden;
 }
 
-/* Custom Scrollbar overrides */
+/* Custom Scrollbar overrides for operations console feel */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #0D0B09;
+  background: #080706;
 }
 ::-webkit-scrollbar-thumb {
-  background: #4A2810;
+  background: #2A170C;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
@@ -62,116 +56,40 @@ body {
 
 /* Leaflet Dark Twin Map Styling */
 .leaflet-container {
-  background: #0d0d0d !important;
+  background: #050505 !important;
 }
 .leaflet-container .leaflet-tile-container img {
   filter: var(--leaflet-tile-filter) !important;
 }
 
-/* Custom Table overrides */
-table {
-  background: #17120F !important;
-}
-th {
-  background: #20150F !important;
-  color: #FFE7CC !important;
-  border-bottom: 1px solid rgba(255, 210, 163, 0.12) !important;
-}
-td {
-  border-bottom: 1px solid rgba(255, 210, 163, 0.06) !important;
-}
-
-/* Glassmorphism Reusable Classes */
-.glass-panel {
-  background: rgba(30, 18, 12, 0.68);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 210, 163, 0.12);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
-  border-radius: 20px;
-}
-
-.glass-card {
-  background: rgba(255, 163, 71, 0.035);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 210, 163, 0.08);
-  border-radius: 12px;
-}
-
-.glass-panel-strong {
-  background: rgba(36, 22, 14, 0.84);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 210, 163, 0.15);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
-  border-radius: 20px;
-}
-
-.glass-panel-hover {
-  @apply transition-all duration-300;
-}
-.glass-panel-hover:hover {
-  background: rgba(255, 138, 0, 0.08);
-  border-color: rgba(255, 163, 71, 0.22);
-  box-shadow: 0 25px 70px rgba(255, 138, 0, 0.05);
-}
-
-/* Re-skinned Action Buttons */
-.glass-button-accent {
-  @apply px-4 py-2 text-xs font-bold rounded-lg border transition-all duration-200 select-none shadow-lg shadow-orange-950/20;
-  background: #FF8A00;
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #090909;
-}
-.glass-button-accent:hover:not(:disabled) {
-  background: #FFA347;
-  box-shadow: 0 0 15px rgba(255, 138, 0, 0.35);
-}
-.glass-button-accent:disabled {
-  @apply opacity-40 cursor-not-allowed;
-}
-
-.glass-button {
-  @apply px-4 py-2 text-xs font-semibold rounded-lg border transition-all duration-200 select-none;
-  background: rgba(255, 138, 0, 0.08);
-  border-color: rgba(255, 163, 71, 0.25);
-  color: #FFE7CC;
-}
-.glass-button:hover:not(:disabled) {
-  background: rgba(255, 138, 0, 0.15);
-  border-color: rgba(255, 138, 0, 0.35);
-}
-.glass-button:disabled {
-  @apply opacity-40 cursor-not-allowed;
-}
-
-.glass-button-ghost {
-  @apply px-4 py-2 text-xs font-medium rounded-lg transition-all duration-200 select-none bg-transparent text-[#FFD2A3] hover:text-white hover:bg-white/5;
-}
-
-.glass-button-danger {
-  @apply px-4 py-2 text-xs font-semibold rounded-lg border transition-all duration-200 select-none;
-  background: rgba(255, 77, 77, 0.08);
-  border-color: rgba(255, 77, 77, 0.25);
-  color: #FF4D4D;
-}
-.glass-button-danger:hover:not(:disabled) {
-  background: rgba(255, 77, 77, 0.15);
-  border-color: rgba(255, 77, 77, 0.35);
-}
-
 /* Accessible focus rings */
 input:focus, select:focus, button:focus {
-  @apply outline-none ring-2 ring-[#FF8A00]/45 ring-offset-2;
+  @apply outline-none ring-1 ring-[#FF8A00]/40 ring-offset-1 ring-offset-black/50;
 }
 
-/* Animations */
+/* Glass card/skeleton animations */
 .animate-fade-in {
-  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Skeleton shimmer */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(18, 12, 8, 0.2) 25%,
+    rgba(255, 138, 0, 0.05) 50%,
+    rgba(18, 12, 8, 0.2) 75%
+  );
+  background-size: 200% 100%;
+  animation: loading-shimmer 1.6s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
