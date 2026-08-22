@@ -19,10 +19,13 @@ export default {
           charcoal: "#171717",
         },
         text: {
-          cream: "#FFF3E5",
           primary: "#FFF7ED",
-          secondary: "#D6C3AE",
-          muted: "#A9947D",
+          heading: "#FFF8F0",
+          body: "#E8D7C5",
+          secondary: "#CBB9A6",
+          muted: "#A89582",
+          cream: "#FFF3E5",
+          pale: "#FFD2A3",
         },
         eco: {
           success: "#22C55E",

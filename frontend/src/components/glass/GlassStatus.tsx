@@ -13,21 +13,17 @@ export const GlassStatus: React.FC<GlassStatusProps> = ({
 }) => {
   const getColors = () => {
     const s = status.toLowerCase();
-    if (s === "active" || s === "online" || s === "healthy" || s === "ok" || s === "connected") {
+    // Healthy/Active/Online
+    if (s === "active" || s === "online" || s === "healthy" || s === "ok" || s === "connected" || s === "running") {
       return {
         dot: "bg-[#22C55E] shadow-[0_0_8px_#22C55E]",
-        badge: "text-[#22C55E] bg-[#22C55E]/10 border-[#22C55E]/20"
+        badge: "text-[#86EFAC] bg-[rgba(34,197,94,0.10)] border-[rgba(34,197,94,0.30)]"
       };
     }
-    if (s === "warning" || s === "degraded" || s === "connecting" || s === "paused") {
-      return {
-        dot: "bg-[#FFB84D] shadow-[0_0_8px_#FFB84D] animate-pulse",
-        badge: "text-[#FFB84D] bg-[#FFB84D]/10 border-[#FFB84D]/20"
-      };
-    }
-    return { // inactive / offline / error
+    // Warning/Inactive/Offline/Error
+    return {
       dot: "bg-[#EF4444] shadow-[0_0_8px_#EF4444]",
-      badge: "text-[#EF4444] bg-[#EF4444]/10 border-[#EF4444]/20"
+      badge: "text-[#FFB4B4] bg-[rgba(239,68,68,0.10)] border-[rgba(239,68,68,0.35)]"
     };
   };
 

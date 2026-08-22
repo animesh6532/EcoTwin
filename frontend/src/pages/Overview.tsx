@@ -280,8 +280,19 @@ export default function Overview() {
       {/* Title Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight uppercase font-sans">ECOTWIN OPERATIONS</h1>
-          <p className="text-text-pale text-xs mt-1">
+          <h1 
+            style={{
+              fontSize: "44px",
+              fontWeight: 800,
+              color: "#FFF8F0",
+              letterSpacing: "-0.02em",
+              textShadow: "0 2px 18px rgba(0,0,0,0.45)"
+            }}
+            className="uppercase font-sans leading-tight"
+          >
+            EcoTwin Operations
+          </h1>
+          <p className="text-[#E8D7C5] text-sm mt-2 leading-relaxed max-w-xl font-sans font-normal">
             Real-time urban mobility and environmental intelligence.
           </p>
         </div>
@@ -319,18 +330,18 @@ export default function Overview() {
         {/* Center / Right: Live digital twin tracking viewport */}
         <div className="lg:col-span-2 relative rounded-[18px] overflow-hidden border border-brand-orange/15 min-h-[300px] flex flex-col justify-between">
           {/* Map wrapper */}
-          <div ref={mapRef} className="absolute inset-0 z-0 bg-[#050505]" />
+          <div ref={mapRef} className="absolute inset-0 z-0 bg-[#120D09]" />
           
           {/* Scanline atmospheric overlays */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.18)_50%)] bg-[size:100%_4px] pointer-events-none z-10 opacity-30" />
           
           {/* Viewport overlay labels */}
-          <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-[#050505]/85 border border-brand-orange/20 rounded-md font-mono text-[9px] uppercase tracking-widest text-brand-amber flex items-center gap-1.5">
+          <div className="absolute top-4 left-4 z-20 px-3 py-1 bg-[#120D09]/85 border border-brand-orange/20 rounded-md font-mono text-[9px] uppercase tracking-widest text-brand-amber flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-brand-orange animate-ping" />
             Live digital twin map
           </div>
           
-          <div className="absolute bottom-4 right-4 z-20 px-3 py-1 bg-[#050505]/85 border border-white/5 rounded-md font-mono text-[9px] uppercase tracking-widest text-text-muted">
+          <div className="absolute bottom-4 right-4 z-20 px-3 py-1 bg-[#120D09]/85 border border-white/5 rounded-md font-mono text-[9px] uppercase tracking-widest text-[#FFF7ED]">
             SIMULATION STEP: {(wsState.simulationTime).toFixed(0)}s
           </div>
         </div>
@@ -351,10 +362,10 @@ export default function Overview() {
                       <stop offset="95%" stopColor="#FF8A00" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="time" stroke="#A9947D" tickLine={false} tick={{ fill: '#D6C3AE', fontSize: 9, fontFamily: 'monospace' }} />
-                  <YAxis stroke="#A9947D" tickLine={false} tick={{ fill: '#D6C3AE', fontSize: 9, fontFamily: 'monospace' }} />
+                  <XAxis dataKey="time" stroke="#A89582" tickLine={false} tick={{ fill: '#CBB9A6', fontSize: 9, fontFamily: 'monospace' }} />
+                  <YAxis stroke="#A89582" tickLine={false} tick={{ fill: '#CBB9A6', fontSize: 9, fontFamily: 'monospace' }} />
                   <Tooltip 
-                    contentStyle={{ background: "rgba(20, 15, 10, 0.90)", border: "1px solid rgba(255, 184, 77, 0.25)", borderRadius: "12px", fontSize: 11, fontFamily: 'monospace' }}
+                    contentStyle={{ background: "rgba(18, 14, 11, 0.95)", border: "1px solid rgba(255, 184, 77, 0.25)", borderRadius: "12px", fontSize: 11, fontFamily: 'monospace' }}
                   />
                   <Area 
                     type="monotone" 
@@ -391,7 +402,7 @@ export default function Overview() {
                 delayedVehicles.map((v) => (
                   <div 
                     key={v.id} 
-                    className="p-2.5 bg-[#120D09]/45 rounded-lg border border-[rgba(255,184,77,0.16)] flex items-center justify-between text-xs font-mono"
+                    className="p-2.5 bg-[#24150B]/45 rounded-lg border border-[rgba(255,184,77,0.16)] flex items-center justify-between text-xs font-mono"
                   >
                     <div>
                       <div className="font-semibold text-text-cream">ID: {v.id}</div>

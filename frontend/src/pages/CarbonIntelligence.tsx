@@ -241,29 +241,29 @@ export default function CarbonIntelligence() {
         <div className="lg:col-span-2 flex flex-col gap-6">
           <GlassPanel className="p-6 relative rounded-[24px] overflow-hidden border border-brand-orange/15 min-h-[400px] flex flex-col justify-between">
             {/* Map container */}
-            <div ref={mapRef} className="absolute inset-0 z-0 bg-[#050505]" />
+            <div ref={mapRef} className="absolute inset-0 z-0 bg-[#120D09]" />
             
             {/* Scanline overlay */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.18)_50%)] bg-[size:100%_4px] pointer-events-none z-10 opacity-35" />
 
             {/* Top Heatmap Settings bar */}
             <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center pointer-events-none">
-              <span className="px-3 py-1 bg-[#050505]/85 border border-brand-orange/20 rounded-md font-mono text-[9px] uppercase tracking-widest text-brand-amber flex items-center gap-1.5 pointer-events-auto">
+              <span className="px-3 py-1 bg-[#120D09]/85 border border-brand-orange/20 rounded-md font-mono text-[9px] uppercase tracking-widest text-brand-amber flex items-center gap-1.5 pointer-events-auto">
                 <Layers className="h-3.5 w-3.5" />
                 Live Emission Heatmap
               </span>
               
               {/* Toggle switch (CO2 vs NOx) */}
-              <div className="flex bg-[#050505]/85 border border-white/5 rounded-full p-1 gap-1 pointer-events-auto font-mono text-[8px] uppercase tracking-wider font-bold">
+              <div className="flex bg-[#120D09]/85 border border-white/5 rounded-full p-1 gap-1 pointer-events-auto font-mono text-[8px] uppercase tracking-wider font-bold">
                 <button
                   onClick={() => setActivePollutionType("co2")}
-                  className={`px-3 py-1 rounded-full transition-colors ${activePollutionType === "co2" ? "bg-brand-orange text-[#050505] font-bold" : "text-text-muted"}`}
+                  className={`px-3 py-1 rounded-full transition-colors ${activePollutionType === "co2" ? "bg-brand-orange text-[#120D09] font-bold" : "text-text-muted"}`}
                 >
                   CO₂
                 </button>
                 <button
                   onClick={() => setActivePollutionType("nox")}
-                  className={`px-3 py-1 rounded-full transition-colors ${activePollutionType === "nox" ? "bg-brand-orange text-[#050505] font-bold" : "text-text-muted"}`}
+                  className={`px-3 py-1 rounded-full transition-colors ${activePollutionType === "nox" ? "bg-brand-orange text-[#120D09] font-bold" : "text-text-muted"}`}
                 >
                   NOx
                 </button>
@@ -271,7 +271,7 @@ export default function CarbonIntelligence() {
             </div>
 
             {/* Heatmap intensity Legend */}
-            <div className="absolute bottom-4 left-4 z-20 bg-[#050505]/85 border border-white/5 p-3 rounded-xl font-mono text-[8px] uppercase tracking-wider space-y-1.5 max-w-xs">
+            <div className="absolute bottom-4 left-4 z-20 bg-[#120D09]/85 border border-white/5 p-3 rounded-xl font-mono text-[8px] uppercase tracking-wider space-y-1.5 max-w-xs">
               <span className="text-text-muted font-bold block mb-1">Pollution Level</span>
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#FFD2A3]" />
@@ -293,10 +293,10 @@ export default function CarbonIntelligence() {
 
             {/* Inactive overlay */}
             {!wsState.running && (
-              <div className="absolute inset-0 bg-[#050505]/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center space-y-3 font-mono p-6">
+              <div className="absolute inset-0 bg-[#120D09]/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center space-y-3 font-mono p-6">
                 <Leaf className="h-8 w-8 text-brand-orange animate-pulse" />
-                <h4 className="font-bold text-text-cream text-xs uppercase tracking-widest">Heatmap offline</h4>
-                <p className="text-text-pale text-[11px] font-sans max-w-xs">Start a SUMO simulation session to populate live spatial emission parameters.</p>
+                <h4 className="font-bold text-[#FFF7ED] text-xs uppercase tracking-widest">Heatmap offline</h4>
+                <p className="text-[#CBB9A6] text-[11px] font-sans max-w-xs">Start a SUMO simulation session to populate live spatial emission parameters.</p>
               </div>
             )}
           </GlassPanel>
@@ -312,10 +312,10 @@ export default function CarbonIntelligence() {
                       <stop offset="95%" stopColor="#FF8A00" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="time" stroke="#A9947D" tickLine={false} tick={{ fill: '#D6C3AE', fontSize: 8, fontFamily: 'monospace' }} />
-                  <YAxis stroke="#A9947D" tickLine={false} tick={{ fill: '#D6C3AE', fontSize: 8, fontFamily: 'monospace' }} />
+                  <XAxis dataKey="time" stroke="#A89582" tickLine={false} tick={{ fill: '#CBB9A6', fontSize: 8, fontFamily: 'monospace' }} />
+                  <YAxis stroke="#A89582" tickLine={false} tick={{ fill: '#CBB9A6', fontSize: 8, fontFamily: 'monospace' }} />
                   <Tooltip 
-                    contentStyle={{ background: "rgba(20, 15, 10, 0.90)", border: "1px solid rgba(255, 184, 77, 0.25)", borderRadius: "8px", fontSize: 10, fontFamily: 'monospace' }}
+                    contentStyle={{ background: "rgba(18, 14, 11, 0.95)", border: "1px solid rgba(255, 184, 77, 0.25)", borderRadius: "8px", fontSize: 10, fontFamily: 'monospace' }}
                   />
                   <Area 
                     type="monotone" 
@@ -387,7 +387,7 @@ export default function CarbonIntelligence() {
                   <div className="h-10 bg-white/5 rounded animate-pulse" />
                 ) : hotspots && hotspots.length > 0 ? (
                   hotspots.map((lane, index) => (
-                    <div key={lane} className="p-3 bg-[#120D09]/45 border border-[rgba(255,184,77,0.16)] rounded-lg flex items-center justify-between text-xs font-mono">
+                    <div key={lane} className="p-3 bg-[#24150B]/45 border border-[rgba(255,184,77,0.16)] rounded-lg flex items-center justify-between text-xs font-mono">
                       <div className="flex items-center gap-2">
                         <span className="h-5 w-5 bg-brand-orange/15 text-brand-orange font-bold text-[8px] flex items-center justify-center rounded-full">
                           {index + 1}

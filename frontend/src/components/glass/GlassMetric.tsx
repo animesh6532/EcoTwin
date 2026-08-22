@@ -23,15 +23,15 @@ export const GlassMetric: React.FC<GlassMetricProps> = ({
     <div 
       className={`p-4 border rounded-xl flex flex-col justify-between h-28 font-mono text-xs ${className}`}
       style={{
-        background: "rgba(255, 255, 255, 0.055)",
-        borderColor: "rgba(255, 184, 77, 0.16)",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        boxShadow: "0 12px 40px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.07)"
+        background: "rgba(25, 20, 16, 0.72)",
+        borderColor: "rgba(255, 184, 77, 0.20)",
+        backdropFilter: "blur(20px) saturate(120%)",
+        WebkitBackdropFilter: "blur(20px) saturate(120%)",
+        boxShadow: "0 18px 55px rgba(0, 0, 0, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.08)"
       }}
     >
       <div className="flex justify-between items-start">
-        <span className="text-[10px] font-bold text-[#A9947D] uppercase tracking-wider">{label}</span>
+        <span className="text-[10px] font-bold text-[#CBB9A6] uppercase tracking-wider">{label}</span>
         {Icon && <Icon className="h-4.5 w-4.5 text-[#FF8A00]" />}
       </div>
 
@@ -44,7 +44,7 @@ export const GlassMetric: React.FC<GlassMetricProps> = ({
               ? "text-[#EF4444] bg-[#EF4444]/10" 
               : trend.type === "down" 
                 ? "text-[#22C55E] bg-[#22C55E]/10" 
-                : "text-[#D6C3AE] bg-white/5"
+                : "text-[#CBB9A6] bg-white/5"
           }`}>
             {trend.value}
           </span>

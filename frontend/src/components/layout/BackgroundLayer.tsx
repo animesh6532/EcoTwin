@@ -2,37 +2,29 @@ import React from "react";
 
 export const BackgroundLayer: React.FC = () => {
   return (
-    <>
-      {/* Fixed metropolitan background image */}
+    <div className="fixed inset-0 z-0 pointer-events-none select-none">
+      {/* Fixed cinematic background image at 42% opacity */}
       <div 
-        className="fixed inset-0 bg-cover bg-center pointer-events-none z-0 select-none brightness-[0.45] contrast-[1.02]"
+        className="absolute inset-0 bg-cover bg-center transition-all duration-300"
         style={{
           backgroundImage: "url('/images/ecotwin-city-hero.png')",
           backgroundAttachment: "fixed",
+          opacity: 0.42,
+          filter: "brightness(0.70) saturate(0.85)"
         }}
       />
       
-      {/* Non-opaque layered dark gradients (city details stay visible) */}
+      {/* Warm dark readability overlay above the image */}
       <div 
-        className="fixed inset-0 pointer-events-none z-0" 
+        className="absolute inset-0"
         style={{
           background: `
-            linear-gradient(to bottom, rgba(5, 8, 12, 0.35), rgba(18, 12, 7, 0.28)),
-            radial-gradient(circle at 50% 50%, rgba(255, 138, 0, 0.05), transparent 75%)
+            linear-gradient(135deg, rgba(10, 8, 6, 0.58), rgba(18, 12, 7, 0.48), rgba(5, 8, 10, 0.58)),
+            radial-gradient(circle at 20% 15%, rgba(255, 138, 0, 0.07), transparent 32%),
+            radial-gradient(circle at 80% 70%, rgba(255, 184, 77, 0.04), transparent 30%)
           `
         }}
       />
-      
-      {/* Dashboard ambient glow radial filters */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0" 
-        style={{
-          background: `
-            radial-gradient(circle at 20% 0%, rgba(255, 138, 0, 0.08), transparent 28%),
-            radial-gradient(circle at 90% 10%, rgba(255, 184, 77, 0.06), transparent 25%)
-          `
-        }}
-      />
-    </>
+    </div>
   );
 };

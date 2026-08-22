@@ -17,8 +17,10 @@
   --ecotwin-gold: #FFC766;
   
   --ecotwin-text-primary: #FFF7ED;
-  --ecotwin-text-secondary: #D6C3AE;
-  --ecotwin-text-muted: #A9947D;
+  --ecotwin-text-heading: #FFF8F0;
+  --ecotwin-text-body: #E8D7C5;
+  --ecotwin-text-secondary: #CBB9A6;
+  --ecotwin-text-muted: #A89582;
   
   --ecotwin-success: #22C55E;
   --ecotwin-cyan: #22D3EE;
@@ -47,13 +49,13 @@ body {
     #0E0E0E
   );
   font-family: 'Plus Jakarta Sans', 'Inter', 'Outfit', sans-serif;
-  color: var(--ecotwin-text-secondary);
+  color: var(--ecotwin-text-body);
   overflow-x: hidden;
   min-height: 100vh;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: var(--ecotwin-text-primary);
+  color: var(--ecotwin-text-heading);
   font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
 }
 
