@@ -4,7 +4,6 @@ import { getTrafficLights, getTrafficLightDetail, setTrafficLightAction } from "
 import { useState } from "react";
 import { GitFork, CheckCircle, Clock, AlertTriangle, ShieldAlert, Cpu } from "lucide-react";
 import { toast } from "../utils/toast";
-import { GlassCard } from "../components/glass/GlassCard";
 import { GlassPanel } from "../components/glass/GlassPanel";
 import { GlassButton } from "../components/glass/GlassButton";
 import { GlassStatus } from "../components/glass/GlassStatus";

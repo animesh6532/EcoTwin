@@ -9,32 +9,25 @@ export default {
       colors: {
         brand: {
           orange: "#FF8A00",
-          bright: "#FF9D24",
-          light: "#FFA347",
+          bright: "#FF9F1C",
           amber: "#FFB84D",
-          amberGlow: "#FFC76A",
+          gold: "#FFC766",
         },
         foundation: {
-          dark: "#050505",
-          soft: "#080706",
-          brown: "#0D0A08",
-          warm: "#120D09",
-          panel: "#18110B",
-          c1: "#2A170C",
-          c2: "#3A2110",
-          c3: "#512A0D",
+          brown: "#24150B",
+          dark: "#120D09",
+          charcoal: "#171717",
         },
         text: {
           cream: "#FFF3E5",
-          peach: "#FFE7CC",
-          pale: "#FFD2A3",
-          muted: "#B89B82",
-          dim: "#8D7868",
+          primary: "#FFF7ED",
+          secondary: "#D6C3AE",
+          muted: "#A9947D",
         },
         eco: {
-          success: "#39D98A",
-          danger: "#FF4D4D",
-          warning: "#FFB84D",
+          success: "#22C55E",
+          cyan: "#22D3EE",
+          danger: "#EF4444",
         }
       },
       fontFamily: {

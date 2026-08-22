@@ -1,28 +1,40 @@
 import React from "react";
 
-interface GlassTableProps extends React.HTMLAttributes<HTMLDivElement> {
+interface GlassTableProps {
   headers: string[];
+  children: React.ReactNode;
+  className?: string;
 }
 
 export const GlassTable: React.FC<GlassTableProps> = ({
   headers,
   children,
-  className = "",
-  ...props
+  className = ""
 }) => {
   return (
-    <div className={`overflow-x-auto rounded-[20px] border border-[rgba(255,183,106,0.12)] bg-[rgba(18,12,8,0.3)] ${className}`} {...props}>
-      <table className="w-full text-xs text-left border-collapse font-mono bg-transparent">
+    <div 
+      className={`overflow-x-auto rounded-xl border font-mono text-xs ${className}`}
+      style={{
+        background: "rgba(255, 255, 255, 0.055)",
+        borderColor: "rgba(255, 184, 77, 0.16)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)"
+      }}
+    >
+      <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b border-[rgba(255,183,106,0.12)] bg-[rgba(30,20,15,0.48)]">
-            {headers.map((h, i) => (
-              <th key={i} className="p-3 bg-transparent text-[#FFE7CC] font-bold uppercase tracking-wider border-none">
+          <tr className="border-b border-[rgba(255,184,77,0.16)] bg-white/5">
+            {headers.map((h, idx) => (
+              <th 
+                key={idx} 
+                className="p-4 text-[10px] font-bold text-[#A9947D] uppercase tracking-wider"
+              >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-[rgba(255,183,106,0.06)]">
+        <tbody className="divide-y divide-[rgba(255,184,77,0.08)]">
           {children}
         </tbody>
       </table>

@@ -5,13 +5,8 @@ import {
   Clock, 
   Leaf, 
   Activity, 
-  Droplet,
   AlertTriangle,
-  Play,
-  Layers,
-  Terminal,
-  Radio,
-  Cpu
+  Play
 } from "lucide-react";
 import { 
   ResponsiveContainer, 
@@ -33,7 +28,6 @@ import { GlassButton } from "../components/glass/GlassButton";
 import { GlassMetric } from "../components/glass/GlassMetric";
 import { GlassChart } from "../components/glass/GlassChart";
 import { GlassStatus } from "../components/glass/GlassStatus";
-import { GlassTable } from "../components/glass/GlassTable";
 
 const CENTER_LAT = 52.5200;
 const CENTER_LNG = 13.4050;
@@ -314,12 +308,9 @@ export default function Overview() {
             {metricsList.map((m, idx) => (
               <GlassMetric
                 key={idx}
-                title={m.label}
+                label={m.label}
                 value={m.value}
-                unit={m.unit}
                 icon={m.icon}
-                color="text-brand-orange"
-                className="bg-[#050505]/45 border-[rgba(255,183,106,0.1)]"
               />
             ))}
           </div>
@@ -360,10 +351,10 @@ export default function Overview() {
                       <stop offset="95%" stopColor="#FF8A00" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="time" stroke="#4A2810" tickLine={false} tick={{ fill: '#8D7868', fontSize: 9, fontFamily: 'monospace' }} />
-                  <YAxis stroke="#4A2810" tickLine={false} tick={{ fill: '#8D7868', fontSize: 9, fontFamily: 'monospace' }} />
+                  <XAxis dataKey="time" stroke="#A9947D" tickLine={false} tick={{ fill: '#D6C3AE', fontSize: 9, fontFamily: 'monospace' }} />
+                  <YAxis stroke="#A9947D" tickLine={false} tick={{ fill: '#D6C3AE', fontSize: 9, fontFamily: 'monospace' }} />
                   <Tooltip 
-                    contentStyle={{ background: "#080706", border: "1px solid rgba(255,183,106,0.18)", borderRadius: "12px", fontSize: 11, fontFamily: 'monospace' }}
+                    contentStyle={{ background: "rgba(20, 15, 10, 0.90)", border: "1px solid rgba(255, 184, 77, 0.25)", borderRadius: "12px", fontSize: 11, fontFamily: 'monospace' }}
                   />
                   <Area 
                     type="monotone" 
@@ -400,7 +391,7 @@ export default function Overview() {
                 delayedVehicles.map((v) => (
                   <div 
                     key={v.id} 
-                    className="p-2.5 bg-[#050505]/45 rounded-lg border border-[rgba(255,183,106,0.1)] flex items-center justify-between text-xs font-mono"
+                    className="p-2.5 bg-[#120D09]/45 rounded-lg border border-[rgba(255,184,77,0.16)] flex items-center justify-between text-xs font-mono"
                   >
                     <div>
                       <div className="font-semibold text-text-cream">ID: {v.id}</div>

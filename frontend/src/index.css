@@ -5,50 +5,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Centralized EcoTwin Redesign Tokens */
+/* Centralized EcoTwin Design Tokens */
 :root {
   color-scheme: dark;
   
-  --ecotwin-bg: #050505;
-  --ecotwin-bg-glass: rgba(18, 12, 8, 0.48);
-  --ecotwin-border-glass: rgba(255, 183, 106, 0.15);
+  --ecotwin-bg: #120D09;
   
   --ecotwin-orange: #FF8A00;
-  --ecotwin-orange-glow: rgba(255, 138, 0, 0.15);
+  --ecotwin-bright: #FF9F1C;
   --ecotwin-amber: #FFB84D;
-  --ecotwin-peach: #FFD2A3;
-  --ecotwin-cream: #FFF3E5;
+  --ecotwin-gold: #FFC766;
   
-  --ecotwin-muted: #8D7868;
-  --ecotwin-muted-text: #B89B82;
+  --ecotwin-text-primary: #FFF7ED;
+  --ecotwin-text-secondary: #D6C3AE;
+  --ecotwin-text-muted: #A9947D;
   
-  --ecotwin-success: #39D98A;
-  --ecotwin-danger: #FF4D4D;
-  --ecotwin-warning: #FFB84D;
+  --ecotwin-success: #22C55E;
+  --ecotwin-cyan: #22D3EE;
+  --ecotwin-danger: #EF4444;
 
   /* Premium warm dark-matter leaflet basemap filter */
-  --leaflet-tile-filter: grayscale(0.85) invert(0.95) contrast(1.15) brightness(0.60) sepia(0.50) hue-rotate(330deg);
+  --leaflet-tile-filter: grayscale(0.80) invert(0.95) contrast(1.10) brightness(0.65) sepia(0.45) hue-rotate(330deg);
 }
 
 body {
-  @apply antialiased selection:bg-[#FF8A00]/25 selection:text-white;
-  background-color: #050505;
+  @apply antialiased selection:bg-[#FF8A00]/30 selection:text-white;
+  background: radial-gradient(
+    circle at 15% 10%,
+    rgba(255,138,0,0.10),
+    transparent 30%
+  ),
+  radial-gradient(
+    circle at 85% 20%,
+    rgba(255,184,77,0.08),
+    transparent 30%
+  ),
+  linear-gradient(
+    135deg,
+    #120D09,
+    #17130F,
+    #0E0E0E
+  );
   font-family: 'Plus Jakarta Sans', 'Inter', 'Outfit', sans-serif;
-  color: var(--ecotwin-cream);
+  color: var(--ecotwin-text-secondary);
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
-/* Custom Scrollbar overrides for operations console feel */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ecotwin-text-primary);
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Custom Scrollbar overrides using Charcoal and Orange */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #080706;
+  background: #171717;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2A170C;
+  background: #24150B;
   border-radius: 4px;
+  border: 1px solid rgba(255, 184, 77, 0.1);
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #FF8A00;
@@ -56,7 +76,7 @@ body {
 
 /* Leaflet Dark Twin Map Styling */
 .leaflet-container {
-  background: #050505 !important;
+  background: #120D09 !important;
 }
 .leaflet-container .leaflet-tile-container img {
   filter: var(--leaflet-tile-filter) !important;
@@ -64,10 +84,10 @@ body {
 
 /* Accessible focus rings */
 input:focus, select:focus, button:focus {
-  @apply outline-none ring-1 ring-[#FF8A00]/40 ring-offset-1 ring-offset-black/50;
+  @apply outline-none ring-2 ring-[#FF8A00]/45 ring-offset-1 ring-offset-foundation-dark;
 }
 
-/* Glass card/skeleton animations */
+/* Animations */
 .animate-fade-in {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -77,13 +97,13 @@ input:focus, select:focus, button:focus {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Skeleton shimmer */
+/* Skeleton shimmer using warm brand gradients */
 .shimmer {
   background: linear-gradient(
     90deg,
-    rgba(18, 12, 8, 0.2) 25%,
-    rgba(255, 138, 0, 0.05) 50%,
-    rgba(18, 12, 8, 0.2) 75%
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 184, 77, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
   );
   background-size: 200% 100%;
   animation: loading-shimmer 1.6s infinite;

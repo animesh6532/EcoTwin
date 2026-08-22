@@ -21,17 +21,11 @@ import {
   Sliders,
   Settings,
   Activity,
-  Cpu,
   Users
 } from "lucide-react";
 import { toast } from "../utils/toast";
 import { SimulationStatus } from "../types";
 import { GlassCard } from "../components/glass/GlassCard";
-import { GlassPanel } from "../components/glass/GlassPanel";
-import { GlassButton } from "../components/glass/GlassButton";
-import { GlassMetric } from "../components/glass/GlassMetric";
-import { GlassStatus } from "../components/glass/GlassStatus";
-import { GlassTable } from "../components/glass/GlassTable";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 
 const CENTER_LAT = 52.5200;
@@ -56,7 +50,6 @@ export default function Simulation() {
     simulationTime,
     vehicles,
     trafficLights,
-    sessionId,
     pollution,
     selectedVehicleId,
     selectVehicle,
@@ -618,7 +611,7 @@ export default function Simulation() {
               placeholder="Search vehicle ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#050505]/45 border border-brand-orange/20 rounded-lg pl-9 pr-3 py-2 text-xs text-text-cream font-mono placeholder:text-text-muted focus:ring-1 focus:ring-brand-orange"
+              className="w-full bg-[#120D09]/45 border border-[#FFB84D]/20 rounded-lg pl-9 pr-3 py-2 text-xs text-[#FFF7ED] font-mono placeholder:text-[#A9947D] focus:ring-1 focus:ring-brand-orange"
             />
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-text-muted" />
           </div>
@@ -642,27 +635,27 @@ export default function Simulation() {
 
               {/* Stats parameters */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#050505]/45 p-2 rounded-lg border border-[rgba(255,183,106,0.1)]">
-                  <div className="text-text-muted text-[8px] uppercase tracking-wider">Speed</div>
-                  <div className="font-bold text-text-cream mt-0.5 font-mono">{selectedVehicleDetail.speed.toFixed(1)} km/h</div>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)]">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">Speed</div>
+                  <div className="font-bold text-[#FFF7ED] mt-0.5 font-mono">{selectedVehicleDetail.speed.toFixed(1)} km/h</div>
                 </div>
-                <div className="bg-[#050505]/45 p-2 rounded-lg border border-[rgba(255,183,106,0.1)]">
-                  <div className="text-text-muted text-[8px] uppercase tracking-wider">Wait Time</div>
-                  <div className={`font-bold mt-0.5 font-mono ${selectedVehicleDetail.waiting_time > 30 ? "text-brand-orange animate-pulse" : "text-text-cream"}`}>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)]">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">Wait Time</div>
+                  <div className={`font-bold mt-0.5 font-mono ${selectedVehicleDetail.waiting_time > 30 ? "text-[#FF8A00] animate-pulse" : "text-[#FFF7ED]"}`}>
                     {selectedVehicleDetail.waiting_time.toFixed(1)}s
                   </div>
                 </div>
-                <div className="bg-[#050505]/45 p-2 rounded-lg border border-[rgba(255,183,106,0.1)]">
-                  <div className="text-text-muted text-[8px] uppercase tracking-wider">CO₂ Rate</div>
-                  <div className="font-bold text-text-cream mt-0.5 font-mono">{selectedVehicleDetail.co2.toFixed(0)} mg</div>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)]">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">CO₂ Rate</div>
+                  <div className="font-bold text-[#FFF7ED] mt-0.5 font-mono">{selectedVehicleDetail.co2.toFixed(0)} mg</div>
                 </div>
-                <div className="bg-[#050505]/45 p-2 rounded-lg border border-[rgba(255,183,106,0.1)]">
-                  <div className="text-text-muted text-[8px] uppercase tracking-wider">NOx Rate</div>
-                  <div className="font-bold text-text-cream mt-0.5 font-mono">{selectedVehicleDetail.nox.toFixed(1)} mg</div>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)]">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">NOx Rate</div>
+                  <div className="font-bold text-[#FFF7ED] mt-0.5 font-mono">{selectedVehicleDetail.nox.toFixed(1)} mg</div>
                 </div>
-                <div className="bg-[#050505]/45 p-2 rounded-lg border border-[rgba(255,183,106,0.1)] col-span-2">
-                  <div className="text-text-muted text-[8px] uppercase tracking-wider">Fuel Burn</div>
-                  <div className="font-bold text-text-cream mt-0.5 font-mono">{selectedVehicleDetail.fuel_consumption.toFixed(1)} ml</div>
+                <div className="bg-[#120D09]/45 p-2 rounded-lg border border-[rgba(255,184,77,0.16)] col-span-2">
+                  <div className="text-[#A9947D] text-[8px] uppercase tracking-wider">Fuel Burn</div>
+                  <div className="font-bold text-[#FFF7ED] mt-0.5 font-mono">{selectedVehicleDetail.fuel_consumption.toFixed(1)} ml</div>
                 </div>
               </div>
 
@@ -699,8 +692,8 @@ export default function Simulation() {
                     onClick={() => selectVehicle(v.id)}
                     className={`w-full text-left p-2 rounded-lg text-xs transition-colors border font-mono ${
                       selectedVehicleId === v.id
-                        ? "bg-brand-orange/10 border-brand-orange text-white font-bold"
-                        : "bg-[#050505]/45 border-[rgba(255,183,106,0.1)] text-[#FFF3E5] hover:bg-white/5"
+                        ? "bg-[#FF8A00]/10 border-[#FF8A00] text-white font-bold"
+                        : "bg-[#120D09]/45 border-[rgba(255,184,77,0.16)] text-[#FFF7ED] hover:bg-white/5"
                     }`}
                   >
                     <div className="flex justify-between items-center">

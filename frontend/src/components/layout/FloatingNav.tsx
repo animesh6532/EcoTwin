@@ -23,11 +23,11 @@ export type PageId =
   | "settings";
 
 interface FloatingNavProps {
-  currentPage: PageId;
-  setCurrentPage: (page: PageId) => void;
+  currentPath: string;
+  navigate: (path: string) => void;
 }
 
-export default function FloatingNav({ currentPage, setCurrentPage }: FloatingNavProps) {
+export default function FloatingNav({ currentPath, navigate }: FloatingNavProps) {
   const menuItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "simulation", label: "Simulation", icon: Play },
@@ -40,10 +40,27 @@ export default function FloatingNav({ currentPage, setCurrentPage }: FloatingNav
     { id: "settings", label: "Settings", icon: SettingsIcon },
   ] as const;
 
+  const getPageIdFromPath = (path: string): PageId => {
+    if (path === "/compare") return "experiments";
+    const segment = path.replace("/", "");
+    return (segment as PageId) || "overview";
+  };
+
+  const activePageId = getPageIdFromPath(currentPath);
+
+  const getPathFromPageId = (id: PageId) => {
+    if (id === "experiments") return "/compare";
+    return `/${id}`;
+  };
+
   return (
     <div className="flex items-center gap-6 overflow-x-auto scrollbar-none max-w-full">
-      {/* Brand Logo with accent lines */}
-      <div className="flex items-center gap-2.5 shrink-0 border-r border-rgba(255,183,106,0.15) pr-5">
+      {/* Clickable Brand Logo (Exit Dashboard / Return to Landing Page) */}
+      <button 
+        onClick={() => navigate("/")}
+        className="flex items-center gap-2.5 shrink-0 border-r border-[rgba(255,183,106,0.15)] pr-5 hover:opacity-85 transition-opacity text-left cursor-pointer"
+        aria-label="Exit Dashboard"
+      >
         <div className="relative flex items-center justify-center">
           <div className="absolute inset-0 bg-brand-orange/20 blur-md rounded-full scale-125" />
           <Leaf className="text-brand-orange h-4.5 w-4.5 relative z-10 animate-pulse" strokeWidth={2.5} />
@@ -52,18 +69,18 @@ export default function FloatingNav({ currentPage, setCurrentPage }: FloatingNav
           <span className="font-bold text-text-cream text-xs tracking-[0.2em] font-mono uppercase leading-none">EcoTwin</span>
           <span className="text-[8px] text-text-muted tracking-wider uppercase font-mono mt-0.5 font-bold">Carbon Intelligence</span>
         </div>
-      </div>
+      </button>
 
       {/* Nav Link List */}
       <nav className="flex items-center gap-1.5">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentPage === item.id;
+          const isActive = activePageId === item.id;
 
           return (
             <button
               key={item.id}
-              onClick={() => setCurrentPage(item.id)}
+              onClick={() => navigate(getPathFromPageId(item.id))}
               style={
                 isActive
                   ? {

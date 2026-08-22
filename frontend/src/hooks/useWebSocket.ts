@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { webSocketService } from '../services/websocket';
 
-export function useWebSocket() {
+export function useWebSocket(currentPath: string) {
   useEffect(() => {
-    webSocketService.connect();
-    return () => {
-      webSocketService.disconnect();
-    };
-  }, []);
+    if (currentPath !== "/") {
+      webSocketService.connect();
+      return () => {
+        webSocketService.disconnect();
+      };
+    }
+  }, [currentPath]);
 }

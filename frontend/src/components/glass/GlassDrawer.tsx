@@ -16,27 +16,28 @@ export const GlassDrawer: React.FC<GlassDrawerProps> = ({
 }) => {
   return (
     <div 
-      className={`fixed right-0 top-0 bottom-0 z-50 w-80 border-l transition-transform duration-300 flex flex-col ${
-        isOpen ? "translate-x-0" : "translate-x-full"
+      className={`fixed top-24 bottom-6 right-6 w-96 border rounded-[22px] p-6 space-y-4 shadow-2xl z-[90] font-mono text-xs transition-transform duration-300 ${
+        isOpen ? "translate-x-0" : "translate-x-[420px]"
       }`}
       style={{
-        background: "rgba(18, 12, 8, 0.92)",
-        borderColor: "rgba(255, 183, 106, 0.15)",
+        background: "rgba(30, 24, 19, 0.88)",
+        borderColor: "rgba(255, 184, 77, 0.22)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        boxShadow: "-10px 0 40px rgba(0,0,0,0.5)"
+        boxShadow: "0 20px 60px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.07)"
       }}
     >
-      <div className="p-4 border-b border-[rgba(255,183,106,0.12)] flex justify-between items-center shrink-0">
-        <h3 className="font-bold text-[#FFF3E5] text-xs font-mono uppercase tracking-wider">{title}</h3>
+      <div className="flex justify-between items-center pb-2 border-b border-white/5">
+        <h3 className="font-bold text-[#FFF7ED] text-[11px] uppercase tracking-widest">{title}</h3>
         <button 
           onClick={onClose} 
-          className="text-[#B89B82] hover:text-[#FFF3E5] transition-colors"
+          className="text-[#A9947D] hover:text-[#FFF7ED] transition-colors"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4.5 w-4.5" />
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+
+      <div className="space-y-4 h-[calc(100%-3rem)] overflow-y-auto scrollbar-none pr-1 text-[#D6C3AE] leading-relaxed">
         {children}
       </div>
     </div>

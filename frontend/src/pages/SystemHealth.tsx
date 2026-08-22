@@ -10,6 +10,8 @@ import {
   Radio 
 } from "lucide-react";
 import { SystemHealthResponse } from "../types";
+import { GlassCard } from "../components/glass/GlassCard";
+import { GlassStatus } from "../components/glass/GlassStatus";
 
 export default function SystemHealth() {
   const wsState = useSimulationStore();
@@ -28,26 +30,28 @@ export default function SystemHealth() {
   });
 
   const getStatusColor = (status: boolean | string | undefined) => {
-    if (status === true || status === "healthy" || status === "ok" || status === "connected") {
-      return "text-[#FF8A00] bg-[#FF8A00]/5 border-[#FF8A00]/20";
+    const s = typeof status === "string" ? status.toLowerCase() : status;
+    if (s === "healthy" || s === "ok" || s === "connected" || s === "running" || s === true) {
+      return "text-[#39D98A] bg-[#39D98A]/5 border-[#39D98A]/20";
     }
-    return "text-[#9A8575] bg-white/5 border-white/5";
+    if (s === "connecting" || s === "paused" || s === "degraded") {
+      return "text-brand-amber bg-brand-amber/5 border-brand-amber/20";
+    }
+    return "text-eco-danger bg-eco-danger/5 border-eco-danger/20"; // offline / error
   };
 
   const getDotColor = (status: boolean | string | undefined) => {
-    if (status === true || status === "healthy" || status === "ok" || status === "connected") {
-      return "bg-[#FF8A00] shadow-[0_0_8px_#FF8A00]";
+    const s = typeof status === "string" ? status.toLowerCase() : status;
+    if (s === "healthy" || s === "ok" || s === "connected" || s === "running" || s === true) {
+      return "bg-[#39D98A] shadow-[0_0_8px_#39D98A]";
     }
-    if (status === "connecting") {
-      return "bg-[#FFA347] shadow-[0_0_8px_#FFA347] animate-pulse";
+    if (s === "connecting") {
+      return "bg-brand-amber shadow-[0_0_8px_#FFB84D] animate-pulse";
     }
-    if (status === "paused") {
-      return "bg-[#FFB84D] shadow-[0_0_8px_#FFB84D]";
+    if (s === "paused" || s === "degraded") {
+      return "bg-brand-amber shadow-[0_0_8px_#FFB84D]";
     }
-    if (status === "error") {
-      return "bg-[#FF4D4D] shadow-[0_0_8px_#FF4D4D]";
-    }
-    return "bg-[#7A6A5C]"; // offline
+    return "bg-eco-danger shadow-[0_0_8px_#FF4D4D]"; // offline
   };
 
   const components = [
@@ -96,20 +100,25 @@ export default function SystemHealth() {
   ];
 
   return (
-    <div className="space-y-8 animate-fade-in text-[#FFF3E5]">
+    <div className="space-y-8 animate-fade-in text-text-cream">
       {/* Title */}
-      <div>
-        <h1 className="text-3xl font-black tracking-tight uppercase font-sans">System Status & Diagnostics</h1>
-        <p className="text-[#FFD2A3] text-sm mt-1">
-          Monitor diagnostics and connectivity for all services in the EcoTwin twin pipeline.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight uppercase font-sans">System Diagnostics</h1>
+          <p className="text-text-pale text-xs mt-1">
+            Monitor diagnostics and connectivity for all services in the EcoTwin pipeline.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <GlassStatus label="SYSTEM READY" status={readyData ? "online" : "offline"} />
+        </div>
       </div>
 
       {isLoadingHealth ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="h-44 bg-white/5 rounded-xl animate-pulse" />
-          <div className="h-44 bg-white/5 rounded-xl animate-pulse" />
-          <div className="h-44 bg-white/5 rounded-xl animate-pulse" />
+          <div className="h-44 bg-[#050505]/45 rounded-xl shimmer animate-pulse" />
+          <div className="h-44 bg-[#050505]/45 rounded-xl shimmer animate-pulse" />
+          <div className="h-44 bg-[#050505]/45 rounded-xl shimmer animate-pulse" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -119,28 +128,32 @@ export default function SystemHealth() {
             const dotClass = getDotColor(c.status);
 
             return (
-              <div key={c.id} className="glass-panel p-6 border border-[#75451A]/20 shadow-2xl flex flex-col justify-between h-48 font-mono">
+              <GlassCard 
+                key={c.id} 
+                variant="status" 
+                className="flex flex-col justify-between h-48 border border-[rgba(255,183,106,0.12)] font-mono text-xs"
+              >
                 <div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-[#FFF3E5] uppercase tracking-wide">{c.name}</span>
-                    <Icon className="h-4.5 w-4.5 text-[#9A8575]" />
+                  <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                    <span className="text-[11px] font-bold text-text-cream uppercase tracking-wide">{c.name}</span>
+                    <Icon className="h-4 w-4 text-text-muted" />
                   </div>
-                  <p className="text-[11px] text-[#FFD2A3] font-sans leading-relaxed mt-2.5">
+                  <p className="text-[11px] text-text-pale font-sans leading-relaxed mt-2.5 font-normal">
                     {c.description}
                   </p>
                 </div>
 
-                <div className="flex justify-between items-center border-t border-[#75451A]/10 pt-3 mt-4 text-[10px] uppercase tracking-wider">
-                  <div className="flex items-center gap-1.5">
+                <div className="flex justify-between items-center border-t border-[rgba(255,183,106,0.08)] pt-2.5 mt-4 text-[9px] uppercase tracking-widest font-bold">
+                  <div className="flex items-center gap-1.5 text-text-muted">
                     <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
-                    <span>Status</span>
+                    <span>Diagnostics</span>
                   </div>
                   
-                  <span className={`px-2 py-0.5 rounded font-bold ${statusClass}`}>
+                  <span className={`px-2 py-0.5 rounded font-bold uppercase ${statusClass}`}>
                     {c.status}
                   </span>
                 </div>
-              </div>
+              </GlassCard>
             );
           })}
         </div>
