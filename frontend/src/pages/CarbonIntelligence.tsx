@@ -67,9 +67,6 @@ export default function CarbonIntelligence() {
     const noxRate = currentEmissions?.nox ?? 0;
     const avgWait = wsState.metrics.average_waiting_time;
 
-    // Calculation weight formula:
-    // co2 weight: 50%, nox weight: 30%, wait time weight: 20%
-    // Normalized out of 100 points
     const co2Score = Math.min((co2Rate / 10000) * 100, 100);
     const noxScore = Math.min((noxRate / 100) * 100, 100);
     const waitScore = Math.min((avgWait / 60) * 100, 100);
@@ -77,20 +74,20 @@ export default function CarbonIntelligence() {
     const totalScore = (co2Score * 0.5) + (noxScore * 0.3) + (waitScore * 0.2);
 
     let status: "LOW" | "MODERATE" | "HIGH" | "CRITICAL" = "LOW";
-    let color = "text-eco-green bg-eco-green/10 border-eco-green/20";
+    let color = "text-[#FFD2A3] bg-[#FFD2A3]/5 border-[#FFD2A3]/20";
     let icon = ShieldCheck;
 
     if (totalScore > 75) {
       status = "CRITICAL";
-      color = "text-carbon-critical bg-carbon-critical/10 border-carbon-critical/20";
+      color = "text-[#FF4D4D] bg-[#FF4D4D]/5 border-[#FF4D4D]/20";
       icon = ShieldAlert;
     } else if (totalScore > 45) {
       status = "HIGH";
-      color = "text-carbon-alert bg-carbon-alert/10 border-carbon-alert/20";
+      color = "text-[#FF8A00] bg-[#FF8A00]/5 border-[#FF8A00]/20";
       icon = AlertTriangle;
     } else if (totalScore > 20) {
       status = "MODERATE";
-      color = "text-traffic-yellow bg-traffic-yellow/10 border-traffic-yellow/20";
+      color = "text-[#FFB84D] bg-[#FFB84D]/5 border-[#FFB84D]/20";
       icon = AlertTriangle;
     }
 
@@ -101,11 +98,11 @@ export default function CarbonIntelligence() {
   const IconCpi = cpi.icon;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in text-[#FFF3E5]">
       {/* Title */}
       <div>
-        <h1 className="text-3xl font-bold text-text-primary">Carbon Intelligence</h1>
-        <p className="text-text-secondary text-sm mt-1">
+        <h1 className="text-3xl font-black tracking-tight uppercase font-sans">Carbon Intelligence</h1>
+        <p className="text-[#FFD2A3] text-sm mt-1">
           Monitor dynamic environmental footprints, pollution hotspots, and spatial dispersal factors.
         </p>
       </div>
@@ -115,8 +112,8 @@ export default function CarbonIntelligence() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* CO2 Area Chart */}
-          <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted mb-4">Carbon Dioxide (CO₂) Emission Rate</h3>
+          <div className="glass-panel p-6 border border-[#75451A]/20 shadow-2xl">
+            <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-text-primary mb-4">Carbon Dioxide (CO₂) Emission Rate</h3>
             
             <div className="h-64">
               {rateHistory.length > 0 ? (
@@ -124,20 +121,20 @@ export default function CarbonIntelligence() {
                   <AreaChart data={rateHistory}>
                     <defs>
                       <linearGradient id="colorCo2Rate" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#EA580C" stopOpacity={0.1}/>
-                        <stop offset="95%" stopColor="#EA580C" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#FF8A00" stopOpacity={0.15}/>
+                        <stop offset="95%" stopColor="#FF8A00" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <XAxis dataKey="time" stroke="#94A3B8" fontSize={10} tickLine={false} />
-                    <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} />
+                    <XAxis dataKey="time" stroke="#555" tickLine={false} tick={{ fill: '#9A8575', fontSize: 9, fontFamily: 'monospace' }} />
+                    <YAxis stroke="#555" tickLine={false} tick={{ fill: '#9A8575', fontSize: 9, fontFamily: 'monospace' }} />
                     <Tooltip 
-                      contentStyle={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "8px", fontSize: 11 }}
+                      contentStyle={{ background: "#11100E", border: "1px solid rgba(255,163,71,0.15)", borderRadius: "8px", fontSize: 11 }}
                     />
                     <Area 
                       type="monotone" 
                       dataKey="co2" 
                       name="CO₂ (mg/s)"
-                      stroke="#EA580C" 
+                      stroke="#FF8A00" 
                       strokeWidth={2} 
                       fillOpacity={1} 
                       fill="url(#colorCo2Rate)" 
@@ -145,8 +142,8 @@ export default function CarbonIntelligence() {
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-text-muted text-sm border-2 border-dashed border-border rounded-lg">
-                  <Leaf className="h-8 w-8 text-text-muted/40 mb-2 animate-pulse" />
+                <div className="h-full flex flex-col items-center justify-center text-[#9A8575] text-xs border border-dashed border-[#75451A]/20 rounded-lg font-mono">
+                  <Leaf className="h-8 w-8 text-[#9A8575]/40 mb-2" />
                   <span>Simulation not active. No live trends available.</span>
                 </div>
               )}
@@ -154,24 +151,24 @@ export default function CarbonIntelligence() {
           </div>
 
           {/* NOx and Fuel Line Chart */}
-          <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted mb-4">NOx & Fuel Rate Telemetry</h3>
+          <div className="glass-panel p-6 border border-[#75451A]/20 shadow-2xl">
+            <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-text-primary mb-4">NOx & Fuel Rate Telemetry</h3>
             
             <div className="h-64">
               {rateHistory.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={rateHistory}>
-                    <XAxis dataKey="time" stroke="#94A3B8" fontSize={10} tickLine={false} />
-                    <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} />
+                    <XAxis dataKey="time" stroke="#555" tickLine={false} tick={{ fill: '#9A8575', fontSize: 9, fontFamily: 'monospace' }} />
+                    <YAxis stroke="#555" tickLine={false} tick={{ fill: '#9A8575', fontSize: 9, fontFamily: 'monospace' }} />
                     <Tooltip 
-                      contentStyle={{ background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "8px", fontSize: 11 }}
+                      contentStyle={{ background: "#11100E", border: "1px solid rgba(255,163,71,0.15)", borderRadius: "8px", fontSize: 11 }}
                     />
                     <Legend verticalAlign="top" height={36} iconSize={10} wrapperStyle={{ fontSize: 11 }} />
                     <Line 
                       type="monotone" 
                       dataKey="nox" 
                       name="NOx Rate (mg/s)"
-                      stroke="#DC2626" 
+                      stroke="#E06C00" 
                       strokeWidth={2} 
                       dot={false}
                     />
@@ -179,15 +176,15 @@ export default function CarbonIntelligence() {
                       type="monotone" 
                       dataKey="fuel" 
                       name="Fuel Consumption (ml/s)"
-                      stroke="#16A34A" 
+                      stroke="#FFB84D" 
                       strokeWidth={2} 
                       dot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-text-muted text-sm border-2 border-dashed border-border rounded-lg">
-                  <Activity className="h-8 w-8 text-text-muted/40 mb-2" />
+                <div className="h-full flex flex-col items-center justify-center text-[#9A8575] text-xs border border-dashed border-[#75451A]/20 rounded-lg font-mono">
+                  <Activity className="h-8 w-8 text-[#9A8575]/40 mb-2" />
                   <span>Simulation not active. No live rate telemetries available.</span>
                 </div>
               )}
@@ -198,74 +195,74 @@ export default function CarbonIntelligence() {
         {/* Right 1 Col: Carbon Pressure Index & Hotspots list */}
         <div className="space-y-8">
           {/* Carbon Pressure Index Card */}
-          <div className="bg-white border border-border rounded-xl p-6 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted">Carbon Pressure Index</h3>
+          <div className="glass-panel p-6 border border-[#75451A]/20 shadow-2xl space-y-4">
+            <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-[#9A8575] mb-2 border-b border-[#75451A]/10 pb-3">Carbon Pressure Index</h3>
             
-            <div className={`p-4 rounded-xl border flex items-center justify-between ${cpi.color}`}>
+            <div className={`p-4 rounded-xl border flex items-center justify-between ${cpi.color} font-mono`}>
               <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider opacity-85">Rating status</span>
-                <div className="text-xl font-bold mt-0.5">{cpi.status}</div>
+                <span className="text-[9px] uppercase font-bold tracking-wider opacity-85">Rating status</span>
+                <div className="text-lg font-bold mt-0.5">{cpi.status}</div>
               </div>
-              <IconCpi className="h-8 w-8 stroke-[2]" />
+              <IconCpi className="h-7 w-7 stroke-[2]" />
             </div>
 
-            <div className="space-y-3 text-xs text-text-secondary leading-relaxed">
-              <div className="flex justify-between items-center text-[11px] font-semibold text-text-primary border-b border-border pb-1">
+            <div className="space-y-3 text-xs text-[#FFD2A3] leading-relaxed font-mono">
+              <div className="flex justify-between items-center text-[10px] font-semibold text-[#FFF3E5] border-b border-[#75451A]/10 pb-1 uppercase tracking-wider">
                 <span>Metrics Contributors</span>
                 <span>Score: {cpi.score.toFixed(0)}/100</span>
               </div>
               
               <div className="flex justify-between">
-                <span>CO₂ emissions (mg/s)</span>
+                <span>CO₂ emissions</span>
                 <span className="font-semibold text-text-primary">50% weight</span>
               </div>
               <div className="flex justify-between">
-                <span>NOx emissions (mg/s)</span>
+                <span>NOx emissions</span>
                 <span className="font-semibold text-text-primary">30% weight</span>
               </div>
               <div className="flex justify-between">
-                <span>Average vehicle wait (s)</span>
+                <span>Avg vehicle wait</span>
                 <span className="font-semibold text-text-primary">20% weight</span>
               </div>
             </div>
             
-            <div className="bg-bg-secondary border border-border rounded-lg p-3 text-[10px] text-text-muted flex gap-2">
-              <Info className="h-4.5 w-4.5 text-text-muted/65 shrink-0" />
-              <span>Calculated dynamically from active vehicles in SUMO step callback.</span>
+            <div className="bg-white/5 border border-white/5 rounded-lg p-3 text-[9px] text-[#9A8575] flex gap-2 font-mono uppercase tracking-wider">
+              <Info className="h-4 w-4 text-[#9A8575]/65 shrink-0" />
+              <span>Calculated dynamically from active vehicles.</span>
             </div>
           </div>
 
           {/* Lane Emission Hotspots Ranking */}
-          <div className="bg-white border border-border rounded-xl p-6 shadow-sm flex flex-col justify-between">
+          <div className="glass-panel p-6 border border-[#75451A]/20 shadow-2xl flex flex-col justify-between h-[320px]">
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-text-muted mb-4">Critical Hotspot Lanes</h3>
+              <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-[#9A8575] mb-4 border-b border-[#75451A]/10 pb-3">Critical Hotspot Lanes</h3>
               
-              <div className="space-y-2">
+              <div className="space-y-2 overflow-y-auto max-h-[180px] pr-1">
                 {isLoadingHotspots ? (
-                  <div className="h-10 bg-bg-secondary rounded animate-pulse" />
+                  <div className="h-10 bg-white/5 rounded animate-pulse" />
                 ) : hotspots && hotspots.length > 0 ? (
                   hotspots.map((lane, index) => (
-                    <div key={lane} className="p-3 bg-bg-secondary border border-border rounded-lg flex items-center justify-between text-xs">
+                    <div key={lane} className="p-3 bg-[#11100E] border border-[#75451A]/10 rounded-lg flex items-center justify-between text-xs font-mono">
                       <div className="flex items-center gap-2">
-                        <span className="h-5 w-5 bg-carbon-critical/10 text-carbon-critical font-bold text-[10px] flex items-center justify-center rounded-full">
+                        <span className="h-5 w-5 bg-[#E06C00]/15 text-[#FF8A00] font-bold text-[9px] flex items-center justify-center rounded-full">
                           {index + 1}
                         </span>
-                        <span className="font-mono text-text-primary">{lane}</span>
+                        <span className="text-[#FFF3E5]">{lane}</span>
                       </div>
-                      <span className="px-2 py-0.5 bg-carbon-alert/10 text-carbon-alert font-semibold text-[9px] rounded uppercase tracking-wider">
+                      <span className="px-2 py-0.5 bg-[#FF8A00]/10 text-[#FF8A00] font-semibold text-[8px] rounded uppercase tracking-wider">
                         High Emission
                       </span>
                     </div>
                   ))
                 ) : (
-                  <div className="py-12 text-center text-xs text-text-muted border border-dashed border-border rounded-lg">
-                    No critical hotspots detected. All lane emissions remain within safe threshold levels.
+                  <div className="py-12 text-center text-xs text-[#9A8575] border border-dashed border-[#75451A]/20 rounded-lg">
+                    No hotspots detected.
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="pt-6 border-t border-border mt-6 text-center text-[10px] text-text-muted font-mono">
+            <div className="pt-6 border-t border-[#75451A]/10 mt-6 text-center text-[10px] text-[#9A8575] font-mono uppercase tracking-wider">
               Accumulated CO₂: {accumulatedEmissions ? (accumulatedEmissions.co2 / 1000).toFixed(1) : 0} g
             </div>
           </div>

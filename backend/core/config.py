@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     HOST: str = "127.0.0.1"
     PORT: int = 8000
     LOG_LEVEL: str = "info"
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "http://localhost:5173"
 
     # SUMO Settings
     SUMO_HOME: str = "C:\\Program Files (x86)\\Eclipse\\Sumo"

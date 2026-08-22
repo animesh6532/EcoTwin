@@ -1,7 +1,9 @@
 import { useSimulationStore } from "../store/simulationStore";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
-const WS_URL = API_BASE_URL.replace(/^http/, "ws") + "/ws/simulation";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+const WS_URL = API_BASE_URL
+  ? API_BASE_URL.replace(/^http/, "ws") + "/ws/simulation"
+  : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws/simulation`;
 
 class WebSocketService {
   private socket: WebSocket | null = null;
@@ -49,6 +51,7 @@ class WebSocketService {
             metrics: payload.metrics,
             pollution: payload.pollution,
           });
+          store.fetchSimulationMetrics();
         }
       } catch (err) {
         console.error("Error parsing WebSocket JSON payload:", err);
