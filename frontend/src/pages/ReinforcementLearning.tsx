@@ -60,8 +60,19 @@ export default function ReinforcementLearning() {
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tight uppercase font-sans">Reinforcement Learning Control</h1>
-          <p className="text-text-pale text-xs mt-1">
+          <h1 
+            style={{
+              fontSize: "44px",
+              fontWeight: 800,
+              color: "#FFF7ED",
+              letterSpacing: "-0.02em",
+              textShadow: "0 2px 18px rgba(0,0,0,0.45)"
+            }}
+            className="uppercase font-sans leading-tight"
+          >
+            Reinforcement Learning Control
+          </h1>
+          <p className="text-[#CBB9A6] text-sm mt-2 leading-relaxed max-w-xl font-sans font-normal">
             Monitor the active deep reinforcement learning policy parameters and evaluate optimized rewards.
           </p>
         </div>
@@ -175,11 +186,12 @@ export default function ReinforcementLearning() {
               <button
                 onClick={() => handleToggleController("fixed_time")}
                 disabled={toggleModeMutation.isPending || wsState.controller === "fixed_time"}
-                className={`w-full p-4 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                style={
                   wsState.controller === "fixed_time"
-                    ? "bg-[#FF8A00]/5 border-[#FF8A00]/35 shadow-[0_0_15px_rgba(255,138,0,0.06)]"
-                    : "bg-[#120D09]/45 border-[rgba(255,184,77,0.16)] hover:bg-white/5"
-                }`}
+                    ? { background: "rgba(255, 138, 0, 0.12)", border: "1px solid rgba(255, 138, 0, 0.55)", boxShadow: "0 0 25px rgba(255, 138, 0, 0.10)" }
+                    : { background: "rgba(25, 20, 16, 0.60)", border: "1px solid rgba(255, 184, 77, 0.16)" }
+                }
+                className="w-full p-4 rounded-xl text-left flex flex-col justify-between transition-all"
               >
                 <div className="flex justify-between items-center w-full">
                   <span className="font-bold text-[#FFF7ED] text-xs font-mono">Fixed-Time Baseline</span>
@@ -195,11 +207,12 @@ export default function ReinforcementLearning() {
               <button
                 onClick={() => handleToggleController("ppo")}
                 disabled={toggleModeMutation.isPending || wsState.controller === "ppo"}
-                className={`w-full p-4 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                style={
                   wsState.controller === "ppo"
-                    ? "bg-[#FF8A00]/5 border-[#FF8A00]/35 shadow-[0_0_15px_rgba(255,138,0,0.06)]"
-                    : "bg-[#120D09]/45 border-[rgba(255,184,77,0.16)] hover:bg-white/5"
-                }`}
+                    ? { background: "rgba(255, 138, 0, 0.12)", border: "1px solid rgba(255, 138, 0, 0.55)", boxShadow: "0 0 25px rgba(255, 138, 0, 0.10)" }
+                    : { background: "rgba(25, 20, 16, 0.60)", border: "1px solid rgba(255, 184, 77, 0.16)" }
+                }
+                className="w-full p-4 rounded-xl text-left flex flex-col justify-between transition-all"
               >
                 <div className="flex justify-between items-center w-full">
                   <span className="font-bold text-[#FFF7ED] text-xs font-mono">PPO Optimization</span>

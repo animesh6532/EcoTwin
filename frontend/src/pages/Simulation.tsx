@@ -396,13 +396,13 @@ export default function Simulation() {
       <div className="flex-1 flex flex-col gap-6 relative h-full">
         
         {/* Map panel */}
-        <div className="flex-1 min-h-[350px] relative rounded-[24px] border border-[rgba(255,183,106,0.15)] overflow-hidden shadow-2xl bg-[#050505]">
+        <div className="flex-1 min-h-[350px] relative rounded-[24px] border border-[rgba(255,184,77,0.20)] overflow-hidden shadow-2xl bg-[#120D09]">
           <div ref={mapRef} className="w-full h-full z-0" />
 
           {/* Config Drawer overlay inside map */}
           {showConfig && !running && (
             <div 
-              style={{ background: "rgba(8,7,6,0.92)", borderColor: "rgba(255,183,106,0.22)" }}
+              style={{ background: "rgba(25, 20, 16, 0.92)", borderColor: "rgba(255, 184, 77, 0.22)" }}
               className="absolute top-4 left-4 border shadow-2xl rounded-[18px] p-5 z-20 w-80 space-y-4 font-mono text-xs"
             >
               <div className="flex justify-between items-center pb-2 border-b border-white/5">
@@ -482,7 +482,7 @@ export default function Simulation() {
           )}
 
           {/* Floating Map Actions Panel */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#080706]/85 backdrop-blur border border-brand-orange/20 shadow-2xl rounded-full px-6 py-3 flex items-center gap-4 z-10 w-max max-w-xl">
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-[#120D09]/85 backdrop-blur border border-brand-orange/20 shadow-2xl rounded-full px-6 py-3 flex items-center gap-4 z-10 w-max max-w-xl">
             <div className="flex items-center gap-2.5 border-r border-white/5 pr-4">
               {!running ? (
                 <>
@@ -582,10 +582,10 @@ export default function Simulation() {
                       <stop offset="95%" stopColor="#FFB84D" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="step" stroke="#2A170C" tickLine={false} tick={{ fill: '#8D7868', fontSize: 8, fontFamily: 'monospace' }} />
-                  <YAxis stroke="#2A170C" tickLine={false} tick={{ fill: '#8D7868', fontSize: 8, fontFamily: 'monospace' }} />
+                  <XAxis dataKey="step" stroke="#A89582" tickLine={false} tick={{ fill: '#CBB9A6', fontSize: 8, fontFamily: 'monospace' }} />
+                  <YAxis stroke="#A89582" tickLine={false} tick={{ fill: '#CBB9A6', fontSize: 8, fontFamily: 'monospace' }} />
                   <Tooltip
-                    contentStyle={{ background: "#080706", border: "1px solid rgba(255,183,106,0.18)", borderRadius: "8px", fontSize: 10, fontFamily: 'monospace' }}
+                    contentStyle={{ background: "rgba(18, 14, 11, 0.95)", border: "1px solid rgba(255, 184, 77, 0.25)", borderRadius: "8px", fontSize: 10, fontFamily: 'monospace' }}
                   />
                   <Area type="monotone" dataKey="vehicles" name="Vehicles (qty)" stroke="#FF8A00" strokeWidth={1.5} fillOpacity={1} fill="url(#colorTimelineVehicles)" />
                   <Area type="monotone" dataKey="speed" name="Avg Speed (km/h)" stroke="#FFB84D" strokeWidth={1.5} fillOpacity={1} fill="url(#colorTimelineSpeed)" />

@@ -140,7 +140,7 @@ export default function TrafficNetwork() {
                     className={`w-full text-left p-3.5 rounded-xl border transition-all text-xs font-mono font-bold flex justify-between items-center ${
                       selectedJunctionId === id
                         ? "bg-brand-orange/10 border-brand-orange text-white"
-                        : "bg-[#050505]/45 border-[rgba(255,183,106,0.12)] text-text-cream hover:bg-white/5"
+                        : "bg-[#120D09]/45 border-[rgba(255,184,77,0.16)] text-[#FFF7ED] hover:bg-white/5"
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export default function TrafficNetwork() {
                 </div>
 
                 {isLoadingDetail ? (
-                  <div className="h-40 bg-[#050505]/45 rounded-xl shimmer animate-pulse" />
+                  <div className="h-40 bg-[#120D09]/45 rounded-xl shimmer animate-pulse" />
                 ) : tlDetail ? (
                   <div className="space-y-6">
                     {/* Phase Override selection */}
@@ -192,7 +192,7 @@ export default function TrafficNetwork() {
                               className={`p-4 rounded-xl border flex flex-col justify-between h-36 font-mono ${
                                 isCurrent 
                                   ? "bg-brand-orange/5 border-brand-orange/45 shadow-[0_0_15px_rgba(255,138,0,0.06)]" 
-                                  : "bg-[#050505]/45 border-[rgba(255,183,106,0.12)]"
+                                  : "bg-[#120D09]/45 border-[rgba(255,184,77,0.16)]"
                               }`}
                             >
                               <div>
@@ -205,7 +205,7 @@ export default function TrafficNetwork() {
                                   )}
                                 </div>
                                 <p className="text-[11px] text-text-pale mt-1.5 font-sans leading-normal">{getPhaseDescription(index)}</p>
-                                <span className="font-mono text-[9px] text-text-muted block mt-2 bg-[#050505] px-2 py-0.5 border border-white/5 rounded max-w-max">
+                                <span className="font-mono text-[9px] text-[#A89582] block mt-2 bg-[#120D09] px-2 py-0.5 border border-white/5 rounded max-w-max">
                                   Pattern: {pattern}
                                 </span>
                               </div>
@@ -240,7 +240,7 @@ export default function TrafficNetwork() {
                       <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                         {actionHistory.length > 0 ? (
                           actionHistory.map((log, idx) => (
-                            <div key={idx} className="p-3 bg-[#050505]/45 border border-white/5 rounded-lg flex items-center justify-between text-xs font-mono text-text-cream">
+                            <div key={idx} className="p-3 bg-[#120D09]/45 border border-[rgba(255,184,77,0.16)] rounded-lg flex items-center justify-between text-xs font-mono text-[#FFF7ED]">
                               <div className="flex items-center gap-2">
                                 <CheckCircle className="h-4 w-4 text-eco-success" />
                                 <span>Phase {log.phase} applied to {log.junctionId}</span>

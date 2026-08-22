@@ -17,8 +17,10 @@
   --ecotwin-gold: #FFC766;
   
   --ecotwin-text-primary: #FFF7ED;
-  --ecotwin-text-secondary: #D6C3AE;
-  --ecotwin-text-muted: #A9947D;
+  --ecotwin-text-heading: #FFF8F0;
+  --ecotwin-text-body: #E8D7C5;
+  --ecotwin-text-secondary: #CBB9A6;
+  --ecotwin-text-muted: #A89582;
   
   --ecotwin-success: #22C55E;
   --ecotwin-cyan: #22D3EE;
@@ -47,13 +49,13 @@ body {
     #0E0E0E
   );
   font-family: 'Plus Jakarta Sans', 'Inter', 'Outfit', sans-serif;
-  color: var(--ecotwin-text-secondary);
+  color: var(--ecotwin-text-body);
   overflow-x: hidden;
   min-height: 100vh;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: var(--ecotwin-text-primary);
+  color: var(--ecotwin-text-heading);
   font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
 }
 
@@ -113,3 +115,55 @@ input:focus, select:focus, button:focus {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Animated gradient flow for internal pages background */
+@keyframes ecoGradientFlow {
+  0% { background-position: 0% 50%; }
+  25% { background-position: 50% 100%; }
+  50% { background-position: 100% 50%; }
+  75% { background-position: 50% 0%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-flow {
+  animation: ecoGradientFlow 18s ease-in-out infinite;
+}
+
+/* Float animations for ambient background orbs */
+@keyframes floatOrb1 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(60px, -30px, 0) scale(1.08); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes floatOrb2 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(-50px, 40px, 0) scale(1.12); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes floatOrb3 {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(40px, 50px, 0) scale(0.92); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+.animate-float-orb-1 {
+  animation: floatOrb1 16s ease-in-out infinite;
+}
+.animate-float-orb-2 {
+  animation: floatOrb2 20s ease-in-out infinite;
+}
+.animate-float-orb-3 {
+  animation: floatOrb3 14s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient-flow,
+  .animate-float-orb-1,
+  .animate-float-orb-2,
+  .animate-float-orb-3 {
+    animation: none !important;
+  }
+}
+

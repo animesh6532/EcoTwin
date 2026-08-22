@@ -103,10 +103,11 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
         <header className="fixed top-6 left-8 right-8 z-50 flex items-center justify-between pointer-events-none max-w-7xl mx-auto">
           <div 
             style={{ 
-              background: "rgba(18, 13, 9, 0.55)", 
-              borderColor: "rgba(255, 184, 77, 0.15)",
-              backdropFilter: "blur(20px)",
-              boxShadow: "0 20px 80px rgba(0,0,0,0.5)"
+              background: "rgba(8, 7, 6, 0.72)", 
+              borderColor: "rgba(255, 145, 40, 0.20)",
+              backdropFilter: "blur(22px)",
+              boxShadow: "0 15px 50px rgba(0,0,0,0.45)",
+              borderRadius: "28px"
             }}
             className="w-full flex items-center justify-between pointer-events-auto border rounded-[28px] px-8 py-3.5"
           >
@@ -263,8 +264,8 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             {/* SECTION 01: CITY */}
             <div className="min-h-screen flex flex-col justify-center py-12">
               <div 
-                className="p-8 border border-[#FFB84D]/16 space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
-                style={{ background: "rgba(255, 255, 255, 0.055)", backdropFilter: "blur(18px)" }}
+                className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
+                style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
                 <div className="flex items-center gap-2 font-mono text-[9px] font-bold text-[#FF8A00] uppercase tracking-widest">
                   <span>SECTION 01</span>
@@ -281,8 +282,8 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             {/* SECTION 02: SIMULATE */}
             <div className="min-h-screen flex flex-col justify-center py-12">
               <div 
-                className="p-8 border border-[#FFB84D]/16 space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
-                style={{ background: "rgba(255, 255, 255, 0.055)", backdropFilter: "blur(18px)" }}
+                className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
+                style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
                 <div className="flex items-center gap-2 font-mono text-[9px] font-bold text-[#FF8A00] uppercase tracking-widest">
                   <span>SECTION 02</span>
@@ -299,8 +300,8 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             {/* SECTION 03: OBSERVE */}
             <div className="min-h-screen flex flex-col justify-center py-12">
               <div 
-                className="p-8 border border-[#FFB84D]/16 space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
-                style={{ background: "rgba(255, 255, 255, 0.055)", backdropFilter: "blur(18px)" }}
+                className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
+                style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
                 <div className="flex items-center gap-2 font-mono text-[9px] font-bold text-[#FF8A00] uppercase tracking-widest">
                   <span>SECTION 03</span>
@@ -339,8 +340,8 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             {/* SECTION 04: MEASURE */}
             <div className="min-h-screen flex flex-col justify-center py-12">
               <div 
-                className="p-8 border border-[#FFB84D]/16 space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
-                style={{ background: "rgba(255, 255, 255, 0.055)", backdropFilter: "blur(18px)" }}
+                className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
+                style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
                 <div className="flex items-center gap-2 font-mono text-[9px] font-bold text-[#FF8A00] uppercase tracking-widest">
                   <span>SECTION 04</span>
@@ -357,8 +358,8 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             {/* SECTION 05: LEARN */}
             <div className="min-h-screen flex flex-col justify-center py-12">
               <div 
-                className="p-8 border border-[#FFB84D]/16 space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
-                style={{ background: "rgba(255, 255, 255, 0.055)", backdropFilter: "blur(18px)" }}
+                className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
+                style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
                 <div className="flex items-center gap-2 font-mono text-[9px] font-bold text-[#FF8A00] uppercase tracking-widest">
                   <span>SECTION 05</span>
@@ -375,8 +376,8 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             {/* SECTION 06: OPTIMIZE */}
             <div className="min-h-screen flex flex-col justify-center py-12">
               <div 
-                className="p-8 border border-[#FFB84D]/16 space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
-                style={{ background: "rgba(255, 255, 255, 0.055)", backdropFilter: "blur(18px)" }}
+                className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
+                style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
                 <div className="flex items-center gap-2 font-mono text-[9px] font-bold text-[#FF8A00] uppercase tracking-widest">
                   <span>SECTION 06</span>
@@ -393,8 +394,8 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             {/* SECTION 07: OPERATE (Final CTA) */}
             <div className="min-h-screen flex flex-col justify-center py-12 space-y-6">
               <div 
-                className="p-8 border border-[#FFB84D]/16 space-y-6 max-w-xl shadow-2xl rounded-[24px]"
-                style={{ background: "rgba(255, 255, 255, 0.06)", backdropFilter: "blur(20px)" }}
+                className="p-8 border space-y-6 max-w-xl shadow-2xl rounded-[24px]"
+                style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
                 <div className="flex items-center gap-2 font-mono text-[9px] font-bold text-[#FF8A00] uppercase tracking-widest">
                   <span>SECTION 07</span>
@@ -431,9 +432,9 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             <div 
               className="sticky top-[15vh] h-[70vh] w-full rounded-[24px] overflow-hidden border shadow-[0_30px_100px_rgba(0,0,0,0.7)] select-none flex flex-col justify-between"
               style={{
-                background: "rgba(255, 255, 255, 0.055)",
-                borderColor: "rgba(255, 184, 77, 0.18)",
-                backdropFilter: "blur(18px)"
+                background: "rgba(25, 20, 16, 0.72)",
+                borderColor: "rgba(255, 184, 77, 0.20)",
+                backdropFilter: "blur(20px) saturate(120%)"
               }}
             >
               <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.3)_50%)] bg-[size:100%_4px] pointer-events-none z-10 opacity-30" />
