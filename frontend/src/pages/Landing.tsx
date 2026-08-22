@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Leaf, ArrowDown, ArrowUpRight, Cpu, Layers, Terminal, Activity } from "lucide-react";
+import { Leaf, ArrowDown, ArrowUpRight, Cpu, Terminal } from "lucide-react";
 import { useSimulationStore } from "../store/simulationStore";
 import { useQuery } from "@tanstack/react-query";
 import { getSystemReadiness } from "../api/health";
@@ -194,8 +194,11 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
               <div className="space-y-4">
                 <h1 
-                  className="animate-delay-100 text-6xl md:text-7xl font-black text-[#FFF7ED] tracking-tight font-sans leading-none"
-                  style={{ textShadow: "0 0 60px rgba(255,138,0,0.12)" }}
+                  className="animate-delay-100 font-black text-[#FFF7ED] tracking-tight font-sans leading-none"
+                  style={{ 
+                    fontSize: "clamp(64px, 10vw, 150px)",
+                    textShadow: "0 0 60px rgba(255,122,0,0.12)" 
+                  }}
                 >
                   ECOTWIN
                 </h1>
@@ -211,14 +214,14 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
                 <button
                   onClick={onEnter}
                   style={{
-                    background: "#FF8A00",
-                    color: "#050505",
+                    background: "linear-gradient(135deg, #FF7A00, #FFB347)",
+                    color: "#160A02",
                     borderRadius: "12px",
                     fontWeight: 700,
                     padding: "14px 28px",
-                    boxShadow: "0 0 20px rgba(255, 138, 0, 0.25)"
+                    boxShadow: "0 8px 25px rgba(255, 122, 0, 0.25)"
                   }}
-                  className="text-xs tracking-widest uppercase transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_15px_45px_rgba(255,138,0,0.25)] active:translate-y-0 flex items-center justify-center gap-2 border-none"
+                  className="text-xs tracking-widest uppercase transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_15px_45px_rgba(255,138,0,0.4)] active:translate-y-0 flex items-center justify-center gap-2 border-none"
                 >
                   <span>ENTER OPERATIONS CENTER</span>
                   <ArrowUpRight className="h-4.5 w-4.5" />
@@ -229,34 +232,61 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
                   style={{
                     borderRadius: "12px",
                     padding: "14px 28px",
-                    border: "1px solid rgba(255,183,106,0.25)"
+                    border: "1px solid rgba(255,179,71,0.25)"
                   }}
-                  className="bg-transparent text-[#FFE7CC] backdrop-blur-[12px] text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:-translate-y-[3px] hover:bg-[#FF8A00]/10 hover:border-[#FF8A00]/40 active:translate-y-0 flex items-center justify-center gap-2"
+                  className="bg-transparent text-[#FFF7ED] backdrop-blur-[12px] text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:-translate-y-[3px] hover:bg-[#FF8A00]/10 hover:border-[#FF8A00]/40 active:translate-y-0 flex items-center justify-center gap-2"
                 >
                   <span>EXPLORE INTELLIGENCE</span>
-                  <ArrowDown className="h-4.5 w-4.5 text-[#FFB84D]" />
+                  <ArrowDown className="h-4.5 w-4.5 text-[#FFB347]" />
                 </button>
               </div>
 
-              {/* System Architecture Badges */}
-              <div className="animate-delay-450 pt-8 border-t border-[rgba(255,183,106,0.12)] max-w-lg">
-                <span className="text-[8px] font-bold uppercase tracking-widest text-[#A9947D] block mb-3 font-mono">Environment Architecture</span>
-                <div className="flex flex-wrap gap-2 text-[8px] font-mono uppercase tracking-wider text-[#D6C3AE]">
-                  <span className="px-2.5 py-1 bg-[#120D09]/75 border border-white/5 rounded-md font-bold flex items-center gap-1">
-                    <Activity className="h-3 w-3 text-[#FF8A00]" /> LIVE DIGITAL TWIN
-                  </span>
-                  <span className="px-2.5 py-1 bg-[#120D09]/75 border border-white/5 rounded-md font-bold flex items-center gap-1">
-                    <Layers className="h-3 w-3 text-[#FF8A00]" /> SUMO
-                  </span>
-                  <span className="px-2.5 py-1 bg-[#120D09]/75 border border-white/5 rounded-md font-bold flex items-center gap-1">
-                    <Terminal className="h-3 w-3 text-[#FF8A00]" /> TRACI
-                  </span>
-                  <span className="px-2.5 py-1 bg-[#120D09]/75 border border-white/5 rounded-md font-bold flex items-center gap-1">
-                    <Cpu className="h-3 w-3 text-[#FF8A00]" /> PPO RL
-                  </span>
-                  <span className="px-2.5 py-1 bg-[#120D09]/75 border border-white/5 rounded-md font-bold flex items-center gap-1">
-                    <Activity className="h-3 w-3 text-[#FF8A00]" /> FASTAPI
-                  </span>
+              {/* Animated System Pipeline Flow */}
+              <div className="animate-delay-450 pt-8 border-t border-[rgba(255,145,40,0.16)] max-w-xl">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-[#9D8C7B] block mb-4 font-mono">System Architecture Pipeline</span>
+                <div className="flex items-center justify-between gap-1 md:gap-2 font-mono text-[9px] font-bold text-[#FFF7ED]">
+                  
+                  {/* Traffic */}
+                  <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-20 text-center relative">
+                    <span className="text-[#FFB347]">TRAFFIC</span>
+                  </div>
+                  
+                  {/* Connector Arrow */}
+                  <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "0s" }}>→</span>
+                  
+                  {/* SUMO */}
+                  <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-20 text-center relative">
+                    <span className="text-[#FF8A00]">SUMO</span>
+                  </div>
+
+                  <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "0.4s" }}>→</span>
+                  
+                  {/* TRACI */}
+                  <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-20 text-center relative">
+                    <span className="text-[#FFB347]">TRACI</span>
+                  </div>
+
+                  <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "0.8s" }}>→</span>
+                  
+                  {/* AI / PPO */}
+                  <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-20 text-center relative">
+                    <span className="text-[#FF8A00]">AI / PPO</span>
+                  </div>
+
+                  <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "1.2s" }}>→</span>
+                  
+                  {/* OPTIMIZATION */}
+                  <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-22 text-center relative">
+                    <span className="text-[#FFB347]">OPTIMIZE</span>
+                  </div>
+
+                  <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "1.6s" }}>→</span>
+                  
+                  {/* CARBON */}
+                  <div className="flex flex-col items-center bg-[#FF8A00]/10 border border-[#FF8A00]/30 px-2.5 py-1.5 rounded-lg w-22 text-center relative shadow-[0_0_15px_rgba(255,122,0,0.15)] animate-pulse">
+                    <span className="text-[#FFB347]">CARBON</span>
+                  </div>
+                  
                 </div>
               </div>
             </div>

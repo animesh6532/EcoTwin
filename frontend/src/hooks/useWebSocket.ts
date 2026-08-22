@@ -2,12 +2,18 @@ import { useEffect } from 'react';
 import { webSocketService } from '../services/websocket';
 
 export function useWebSocket(currentPath: string) {
+  const isDashboard = currentPath !== "/";
+
   useEffect(() => {
-    if (currentPath !== "/") {
+    if (isDashboard) {
       webSocketService.connect();
-      return () => {
-        webSocketService.disconnect();
-      };
+    } else {
+      webSocketService.disconnect();
     }
-  }, [currentPath]);
+    return () => {
+      if (isDashboard) {
+        webSocketService.disconnect();
+      }
+    };
+  }, [isDashboard]);
 }

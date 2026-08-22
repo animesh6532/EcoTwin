@@ -162,8 +162,22 @@ input:focus, select:focus, button:focus {
   .animate-gradient-flow,
   .animate-float-orb-1,
   .animate-float-orb-2,
-  .animate-float-orb-3 {
+  .animate-float-orb-3,
+  .animate-pipeline-arrow {
     animation: none !important;
   }
 }
+
+/* Animated arrows in landing page pipeline */
+@keyframes pipelinePulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.25) translateX(1px); color: #FF8A00; text-shadow: 0 0 10px #FF8A00; }
+}
+
+.animate-pipeline-arrow {
+  animation: pipelinePulse 2s ease-in-out infinite;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
 
