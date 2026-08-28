@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.api.routes import health, simulation, vehicles, emissions, traffic_lights, rl, metrics, analysis
+from backend.api.routes import health, simulation, vehicles, emissions, traffic_lights, rl, metrics, analysis, project
 
 api_router = APIRouter()
 
@@ -12,3 +12,4 @@ api_router.include_router(traffic_lights.router, prefix="/traffic-lights", tags=
 api_router.include_router(rl.router, prefix="/rl", tags=["Reinforcement Learning"])
 api_router.include_router(metrics.router, prefix="/metrics", tags=["Metrics"])
 api_router.include_router(analysis.router, prefix="/analysis", tags=["Analytics"])
+api_router.include_router(project.router, prefix="/project", tags=["Project"])
