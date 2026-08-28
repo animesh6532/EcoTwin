@@ -41,6 +41,7 @@ function sumoToLatLng(x: number, y: number): [number, number] {
 export default function Overview() {
   const wsState = useSimulationStore();
   const [emissionsHistory, setEmissionsHistory] = useState<{ time: string; co2: number }[]>([]);
+  const [tileError, setTileError] = useState(false);
   
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -105,10 +106,15 @@ export default function Overview() {
       minZoom: 15,
     }).setView([CENTER_LAT, CENTER_LNG], 16.5);
 
-    // Dark Matter Map Tiles
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 20
-    }).addTo(map);
+    // Standard OpenStreetMap Map Tiles (inverted via global CSS filter)
+    const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+    tiles.on("tileerror", () => {
+      setTileError(true);
+    });
+    tiles.addTo(map);
 
     // Road lines
     const lineOptions = { color: "#3A2110", weight: 6, opacity: 0.5 };
@@ -344,6 +350,28 @@ export default function Overview() {
           <div className="absolute bottom-4 right-4 z-20 px-3 py-1 bg-[#120D09]/85 border border-white/5 rounded-md font-mono text-[9px] uppercase tracking-widest text-[#FFF7ED]">
             SIMULATION STEP: {(wsState.simulationTime).toFixed(0)}s
           </div>
+
+          {tileError && (
+            <div className="absolute inset-0 bg-[#120D09]/92 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center space-y-3 font-mono p-6 border border-eco-danger/30">
+              <AlertTriangle className="h-8 w-8 text-eco-danger animate-pulse" />
+              <h4 className="font-bold text-[#FFF7ED] text-xs uppercase tracking-widest">Basemap unavailable</h4>
+              <p className="text-[#CBB9A6] text-[11px] font-sans max-w-xs">Map tiles failed to load. The simulation metrics remain fully operational.</p>
+              <button 
+                onClick={() => setTileError(false)} 
+                className="px-3 py-1 bg-white/5 border border-white/10 hover:border-brand-orange/40 hover:bg-[#FF8A00]/10 rounded-lg text-[9px] uppercase tracking-wider font-bold transition-all text-text-cream cursor-pointer pointer-events-auto"
+              >
+                Retry Map Tiles
+              </button>
+            </div>
+          )}
+
+          {!wsState.running && (
+            <div className="absolute inset-0 bg-[#120D09]/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center space-y-3 font-mono p-6">
+              <Leaf className="h-8 w-8 text-brand-orange animate-pulse" />
+              <h4 className="font-bold text-[#FFF7ED] text-xs uppercase tracking-widest">Digital Twin Offline</h4>
+              <p className="text-[#CBB9A6] text-[11px] font-sans max-w-xs">Start a SUMO simulation session to view live vehicle coordinates and junction states.</p>
+            </div>
+          )}
         </div>
       </GlassPanel>
 
