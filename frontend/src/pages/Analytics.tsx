@@ -150,12 +150,12 @@ export default function Analytics() {
 
           {/* Grid of charts */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {renderAnalyticsChart("CO₂ Emissions", "co2_emission", "#FF8A00", "grams", 1000)}
-            {renderAnalyticsChart("NOx Emissions", "nox_emission", "#E06C00", "grams", 1000)}
+            {renderAnalyticsChart("CO₂ Emissions", "total_co2", "#FF8A00", "grams", 1000)}
+            {renderAnalyticsChart("NOx Emissions", "total_nox", "#E06C00", "grams", 1000)}
             {renderAnalyticsChart("Average Speed", "average_speed", "#FFD2A3", "km/h")}
             {renderAnalyticsChart("Average Waiting Time", "average_waiting_time", "#FFB84D", "seconds")}
             {renderAnalyticsChart("Active Vehicle Count", "vehicle_count", "#FFE7CC", "qty")}
-            {renderAnalyticsChart("Fuel Consumption", "fuel_consumption", "#FFF3E5", "Liters", 1000)}
+            {renderAnalyticsChart("Fuel Consumption", "total_fuel", "#FFF3E5", "Liters", 1000)}
             {renderAnalyticsChart("Reinforcement Learning Reward", "reward", "#FFA347", "score")}
             {renderAnalyticsChart("Traffic Throughput Efficiency", "average_speed", "#FFD2A3", "index")}
           </div>

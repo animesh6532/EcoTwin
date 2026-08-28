@@ -8,7 +8,8 @@ import {
   Layers, 
   Activity, 
   Settings as SettingsIcon,
-  Leaf
+  Leaf,
+  BookOpen
 } from "lucide-react";
 
 export type PageId = 
@@ -19,6 +20,7 @@ export type PageId =
   | "rl"
   | "analytics"
   | "experiments"
+  | "insights"
   | "health"
   | "settings";
 
@@ -36,6 +38,7 @@ export default function FloatingNav({ currentPath, navigate }: FloatingNavProps)
     { id: "rl", label: "RL Control", icon: Cpu },
     { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "experiments", label: "Compare", icon: Layers },
+    { id: "insights", label: "Insights", icon: BookOpen },
     { id: "health", label: "Health", icon: Activity },
     { id: "settings", label: "Settings", icon: SettingsIcon },
   ] as const;
