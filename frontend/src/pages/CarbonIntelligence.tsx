@@ -34,6 +34,7 @@ export default function CarbonIntelligence() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const gridCellsRef = useRef<L.Rectangle[]>([]);
+  const [tileError, setTileError] = useState(false);
 
   // Queries
   const { data: currentEmissions } = useQuery({
@@ -90,10 +91,15 @@ export default function CarbonIntelligence() {
       minZoom: 15,
     }).setView([CENTER_LAT, CENTER_LNG], 16.5);
 
-    // Dark Matter basemap
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 20
-    }).addTo(map);
+    // Standard OpenStreetMap Map Tiles (inverted via global CSS filter)
+    const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+    tiles.on("tileerror", () => {
+      setTileError(true);
+    });
+    tiles.addTo(map);
 
     // Road references
     const lineOptions = { color: "#2A170C", weight: 6, opacity: 0.4 };
@@ -242,6 +248,20 @@ export default function CarbonIntelligence() {
           <GlassPanel className="p-6 relative rounded-[24px] overflow-hidden border border-brand-orange/15 min-h-[400px] flex flex-col justify-between">
             {/* Map container */}
             <div ref={mapRef} className="absolute inset-0 z-0 bg-[#120D09]" />
+
+            {tileError && (
+              <div className="absolute inset-0 bg-[#120D09]/92 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center space-y-3 font-mono p-6 border border-eco-danger/30 rounded-[24px]">
+                <AlertTriangle className="h-8 w-8 text-eco-danger animate-pulse" />
+                <h4 className="font-bold text-[#FFF7ED] text-xs uppercase tracking-widest">Basemap unavailable</h4>
+                <p className="text-[#CBB9A6] text-[11px] font-sans max-w-xs">Map tiles failed to load. The emissions heatmap overlay remains fully operational.</p>
+                <button 
+                  onClick={() => setTileError(false)} 
+                  className="px-3 py-1 bg-white/5 border border-white/10 hover:border-brand-orange/40 hover:bg-[#FF8A00]/10 rounded-lg text-[9px] uppercase tracking-wider font-bold transition-all text-text-cream cursor-pointer pointer-events-auto animate-fade-in"
+                >
+                  Retry Map Tiles
+                </button>
+              </div>
+            )}
             
             {/* Scanline overlay */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.18)_50%)] bg-[size:100%_4px] pointer-events-none z-10 opacity-35" />
