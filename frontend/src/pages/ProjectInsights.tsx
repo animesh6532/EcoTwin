@@ -1,29 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  FileCode2, 
   GitBranch, 
   Cpu, 
-  Terminal, 
   Network, 
-  Leaf, 
-  Database, 
-  FileSpreadsheet, 
-  Activity, 
   ChevronRight, 
   BookOpen, 
   Layout, 
-  Layers, 
   Compass, 
   Image as ImageIcon,
-  Sliders,
-  Play,
   CheckCircle2,
-  AlertTriangle,
   ZoomIn,
-  X,
-  ExternalLink,
-  Code
+  X
 } from "lucide-react";
 import { 
   getProjectOverview, 
@@ -33,7 +21,6 @@ import {
   getProjectOutputs, 
   getProjectModels, 
   NotebookSummary,
-  NotebookDetails,
   OutputGalleryItem,
   ModelOverviewItem,
   WorkflowNode
@@ -258,7 +245,7 @@ export default function ProjectInsights() {
                   <h4 className="text-xs font-bold uppercase tracking-widest font-mono text-text-muted">Core Subsystems</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {overview.subsystems.map((sub, idx) => (
-                      <GlassCard key={idx} variant="hoverable" className="p-5 space-y-2">
+                      <GlassCard key={idx} variant="small" className="p-5 space-y-2">
                         <div className="flex items-center gap-2 text-brand-amber font-mono font-bold text-xs uppercase">
                           <CheckCircle2 className="h-4.5 w-4.5 text-brand-orange" />
                           <span>{sub.name}</span>
@@ -481,7 +468,7 @@ export default function ProjectInsights() {
                                 </pre>
                               ) : (
                                 <p className="text-xs text-text-pale leading-relaxed whitespace-pre-line font-normal">
-                                  {cell.source.replace(/^#+\s+.+$/, "").strip()} {/* Strip duplicate headers */}
+                                  {cell.source.replace(/^#+\s+.+$/, "").trim()} {/* Strip duplicate headers */}
                                 </p>
                               )}
 
@@ -589,7 +576,7 @@ export default function ProjectInsights() {
                   ))
                 ) : notebooks && notebooks.length > 0 ? (
                   notebooks.map((nb: NotebookSummary) => (
-                    <GlassCard key={nb.id} variant="hoverable" className="flex flex-col justify-between h-64 p-6 relative group">
+                    <GlassCard key={nb.id} variant="small" className="flex flex-col justify-between h-64 p-6 relative group">
                       
                       {/* Top metadata */}
                       <div className="space-y-3">
@@ -617,7 +604,7 @@ export default function ProjectInsights() {
                         <GlassButton
                           onClick={() => setSelectedNotebookId(nb.id)}
                           variant="secondary"
-                          size="xs"
+                          size="sm"
                           className="w-full font-mono text-[9px] uppercase tracking-widest h-8"
                         >
                           Explore Notebook
@@ -664,7 +651,7 @@ export default function ProjectInsights() {
               gallery
                 .filter((item: OutputGalleryItem) => galleryFilter === "All" || item.category === galleryFilter)
                 .map((item: OutputGalleryItem, idx: number) => (
-                  <GlassCard key={idx} variant="hoverable" className="flex flex-col justify-between p-4 overflow-hidden group">
+                  <GlassCard key={idx} variant="small" className="flex flex-col justify-between p-4 overflow-hidden group">
                     
                     {/* Image frame */}
                     <div className="relative aspect-video rounded-xl bg-[#050505]/40 overflow-hidden border border-white/5 group-hover:border-brand-orange/30 transition-all flex items-center justify-center">

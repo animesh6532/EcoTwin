@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Leaf, ArrowDown, ArrowUpRight, Cpu, Terminal } from "lucide-react";
+import { Leaf, ArrowUpRight, Cpu, Terminal } from "lucide-react";
 import { useSimulationStore } from "../store/simulationStore";
 import { useQuery } from "@tanstack/react-query";
 import { getSystemReadiness } from "../api/health";
@@ -26,12 +26,6 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleScrollToStoryboard = () => {
-    window.scrollTo({
-      top: window.innerHeight,
-      behavior: "smooth",
-    });
-  };
 
   const { data: isReady } = useQuery<{ status: string }, Error>({
     queryKey: ["apiReadyLanding"],
@@ -58,6 +52,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
     { label: "RL Control", path: "/rl" },
     { label: "Analytics", path: "/analytics" },
     { label: "Compare", path: "/compare" },
+    { label: "Insights", path: "/insights" },
     { label: "Health", path: "/health" },
     { label: "Settings", path: "/settings" }
   ] as const;
@@ -228,16 +223,16 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
                 </button>
                 
                 <button
-                  onClick={handleScrollToStoryboard}
+                  onClick={() => navigate("/insights")}
                   style={{
                     borderRadius: "12px",
                     padding: "14px 28px",
                     border: "1px solid rgba(255,179,71,0.25)"
                   }}
-                  className="bg-transparent text-[#FFF7ED] backdrop-blur-[12px] text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:-translate-y-[3px] hover:bg-[#FF8A00]/10 hover:border-[#FF8A00]/40 active:translate-y-0 flex items-center justify-center gap-2"
+                  className="bg-transparent text-[#FFF7ED] backdrop-blur-[12px] text-xs font-bold tracking-widest uppercase transition-all duration-200 hover:-translate-y-[3px] hover:bg-[#FF8A00]/10 hover:border-[#FF8A00]/40 active:translate-y-0 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>EXPLORE INTELLIGENCE</span>
-                  <ArrowDown className="h-4.5 w-4.5 text-[#FFB347]" />
+                  <span>EXPLORE PROJECT</span>
+                  <ArrowUpRight className="h-4.5 w-4.5 text-[#FFB347]" />
                 </button>
               </div>
 
