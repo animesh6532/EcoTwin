@@ -23,30 +23,39 @@ class AnalyticsService:
             fuel_imp = ((base_snap.total_fuel - ppo_snap.total_fuel) / (base_snap.total_fuel or 1.0)) * 100.0
             
             return {
-                "ppo_session": ppo_session_id,
-                "baseline_session": baseline_session_id,
-                "metrics": {
-                    "co2": {
-                        "baseline": base_snap.total_co2,
-                        "ppo": ppo_snap.total_co2,
-                        "improvement_pct": float(co2_imp) # positive is reduction (good)
+                "session_ppo": ppo_session_id,
+                "session_baseline": baseline_session_id,
+                "duration_steps": int(ppo_snap.step) if ppo_snap else 0,
+                "metrics": [
+                    {
+                        "metric": "CO2 Emissions",
+                        "baseline": float(base_snap.total_co2),
+                        "ppo": float(ppo_snap.total_co2),
+                        "diff_absolute": float(ppo_snap.total_co2 - base_snap.total_co2),
+                        "improvement_pct": float(co2_imp)
                     },
-                    "waiting_time": {
-                        "baseline": base_snap.average_waiting_time,
-                        "ppo": ppo_snap.average_waiting_time,
+                    {
+                        "metric": "Average Waiting Time",
+                        "baseline": float(base_snap.average_waiting_time),
+                        "ppo": float(ppo_snap.average_waiting_time),
+                        "diff_absolute": float(ppo_snap.average_waiting_time - base_snap.average_waiting_time),
                         "improvement_pct": float(wait_imp)
                     },
-                    "average_speed": {
-                        "baseline": base_snap.average_speed,
-                        "ppo": ppo_snap.average_speed,
+                    {
+                        "metric": "Average Speed",
+                        "baseline": float(base_snap.average_speed),
+                        "ppo": float(ppo_snap.average_speed),
+                        "diff_absolute": float(ppo_snap.average_speed - base_snap.average_speed),
                         "improvement_pct": float(speed_imp)
                     },
-                    "fuel": {
-                        "baseline": base_snap.total_fuel,
-                        "ppo": ppo_snap.total_fuel,
+                    {
+                        "metric": "Fuel Consumption",
+                        "baseline": float(base_snap.total_fuel),
+                        "ppo": float(ppo_snap.total_fuel),
+                        "diff_absolute": float(ppo_snap.total_fuel - base_snap.total_fuel),
                         "improvement_pct": float(fuel_imp)
                     }
-                }
+                ]
             }
         finally:
             db.close()

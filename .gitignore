@@ -104,6 +104,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+ecotwin.db
 *.pem
 *.key
 *.secret
