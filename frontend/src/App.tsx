@@ -11,6 +11,7 @@ import Experiments from "./pages/Experiments";
 import SystemHealth from "./pages/SystemHealth";
 import Settings from "./pages/Settings";
 import Landing from "./pages/Landing";
+import ProjectInsights from "./pages/ProjectInsights";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { BackgroundLayer } from "./components/layout/BackgroundLayer";
 import { CursorGlow } from "./components/layout/CursorGlow";
@@ -53,6 +54,8 @@ export default function App() {
         return <Experiments />;
       case "/health":
         return <SystemHealth />;
+      case "/insights":
+        return <ProjectInsights />;
       case "/settings":
         return <Settings />;
       default:
