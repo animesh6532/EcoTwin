@@ -23,6 +23,7 @@ import { toast } from "../utils/toast";
 import { webSocketService } from "../services/websocket";
 import L from "leaflet";
 import { GlassCard } from "../components/glass/GlassCard";
+import { useGeolocation } from "../hooks/useGeolocation";
 import { GlassPanel } from "../components/glass/GlassPanel";
 import { GlassButton } from "../components/glass/GlassButton";
 import { GlassMetric } from "../components/glass/GlassMetric";
@@ -42,6 +43,18 @@ export default function Overview() {
   const wsState = useSimulationStore();
   const [emissionsHistory, setEmissionsHistory] = useState<{ time: string; co2: number }[]>([]);
   const [tileError, setTileError] = useState(false);
+  const userMarkerRef = useRef<L.Marker | null>(null);
+  const userCircleRef = useRef<L.Circle | null>(null);
+
+  const { 
+    latitude, 
+    longitude, 
+    accuracy, 
+    loading: geoLoading, 
+    error: geoError, 
+    detectLocation, 
+    clearLocation 
+  } = useGeolocation();
   
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -93,8 +106,9 @@ export default function Overview() {
   }, [wsState.simulationTime, wsState.co2, wsState.running]);
 
   // Telemetry map rendering
+  // Initialize Map on mount
   useEffect(() => {
-    if (!wsState.running || !mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current || mapInstanceRef.current) return;
 
     const map = L.map(mapRef.current, {
       zoomControl: false,
@@ -139,7 +153,52 @@ export default function Overview() {
       markersRef.current = {};
       signalsRef.current = {};
     };
-  }, [wsState.running]);
+  }, []);
+
+  // Update user location marker on map
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || latitude === null || longitude === null) {
+      if (userMarkerRef.current) {
+        userMarkerRef.current.remove();
+        userMarkerRef.current = null;
+      }
+      if (userCircleRef.current) {
+        userCircleRef.current.remove();
+        userCircleRef.current = null;
+      }
+      return;
+    }
+
+    if (userMarkerRef.current) userMarkerRef.current.remove();
+    if (userCircleRef.current) userCircleRef.current.remove();
+
+    // Accuracy Circle
+    if (accuracy) {
+      userCircleRef.current = L.circle([latitude, longitude], {
+        radius: accuracy,
+        color: "#FF8A00",
+        weight: 1,
+        fillColor: "#FF8A00",
+        fillOpacity: 0.1,
+      }).addTo(map);
+    }
+
+    // You are here marker
+    userMarkerRef.current = L.marker([latitude, longitude], {
+      icon: L.divIcon({
+        className: 'custom-user-marker',
+        html: `<div class="relative flex items-center justify-center">
+                 <span class="absolute inline-flex h-6 w-6 rounded-full bg-brand-orange/35 animate-ping"></span>
+                 <span class="relative flex h-3 w-3 rounded-full bg-brand-orange border border-white"></span>
+               </div>`,
+        iconSize: [24, 24]
+      })
+    }).addTo(map)
+      .bindPopup('<div class="font-mono text-[10px] text-brand-orange bg-[#050505] p-2 border border-brand-orange/20 rounded-md">📍 You are here</div>');
+
+    map.flyTo([latitude, longitude], 16);
+  }, [latitude, longitude, accuracy]);
 
   // Update vehicle markers
   useEffect(() => {
@@ -372,6 +431,81 @@ export default function Overview() {
               <p className="text-[#CBB9A6] text-[11px] font-sans max-w-xs">Start a SUMO simulation session to view live vehicle coordinates and junction states.</p>
             </div>
           )}
+
+          {/* Geolocation Controls Panel */}
+          <div className="absolute top-4 right-4 z-20 bg-[#120D09]/85 border border-white/5 p-3.5 rounded-xl font-mono text-[8px] uppercase tracking-wider space-y-3 max-w-[200px] pointer-events-auto shadow-xl">
+            <span className="text-text-muted font-bold block mb-1">Geolocation</span>
+            
+            {geoLoading ? (
+              <div className="flex items-center gap-2 text-brand-amber">
+                <span className="h-2 w-2 rounded-full bg-brand-orange animate-ping" />
+                <span>Detecting...</span>
+              </div>
+            ) : latitude !== null && longitude !== null ? (
+              <div className="space-y-2">
+                <div className="text-[9px] text-[#FFF7ED] font-bold">📍 You are here</div>
+                <div className="text-[8px] text-text-pale lowercase tracking-normal truncate">
+                  lat: {latitude.toFixed(4)}, lon: {longitude.toFixed(4)}
+                </div>
+                {Math.abs(latitude - CENTER_LAT) > 0.5 || Math.abs(longitude - CENTER_LNG) > 0.5 ? (
+                  <div className="text-[7px] text-[#FFB84D] normal-case leading-normal">
+                    Simulation network runs in Berlin, Germany.
+                  </div>
+                ) : null}
+                <div className="flex gap-1 pt-1.5">
+                  <button
+                    onClick={() => mapInstanceRef.current?.flyTo([latitude, longitude], 16)}
+                    className="flex-1 px-2 py-1 bg-white/5 hover:bg-[#FF8A00]/15 hover:border-brand-orange/40 border border-white/10 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-text-cream"
+                  >
+                    Show Me
+                  </button>
+                  <button
+                    onClick={() => {
+                      clearLocation();
+                      if (userMarkerRef.current) userMarkerRef.current.remove();
+                      if (userCircleRef.current) userCircleRef.current.remove();
+                      mapInstanceRef.current?.flyTo([CENTER_LAT, CENTER_LNG], 16);
+                    }}
+                    className="px-2 py-1 bg-white/5 hover:bg-eco-danger/10 hover:border-eco-danger/40 border border-white/10 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-[#FF4D4D]"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="text-text-pale text-[7px] leading-relaxed normal-case">
+                  Enable location to show your position relative to simulation grids.
+                </div>
+                <button
+                  onClick={detectLocation}
+                  className="w-full py-1.5 bg-brand-orange hover:bg-brand-bright text-[#120D09] font-bold rounded-lg text-[8px] uppercase tracking-widest transition-all cursor-pointer shadow-md text-center"
+                >
+                  Use My Location
+                </button>
+              </div>
+            )}
+
+            {geoError && (
+              <div className="space-y-1.5 p-2 bg-eco-danger/10 border border-eco-danger/20 rounded-lg text-[#FF4D4D] text-[8px] leading-relaxed normal-case">
+                <div className="font-bold uppercase tracking-wider text-[7px]">Error:</div>
+                <div>{geoError}</div>
+                <button
+                  onClick={detectLocation}
+                  className="mt-1 w-full py-1 bg-white/5 hover:bg-eco-danger/20 border border-[#FF4D4D]/20 rounded text-[7px] font-bold uppercase cursor-pointer"
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => mapInstanceRef.current?.flyTo([CENTER_LAT, CENTER_LNG], 16)}
+              className="w-full py-1.5 bg-white/5 border border-white/10 hover:border-brand-orange/40 hover:bg-[#FF8A00]/10 rounded-lg text-[7px] uppercase tracking-widest transition-all text-text-cream font-bold cursor-pointer text-center"
+            >
+              Jump to Simulation Area
+            </button>
+          </div>
         </div>
       </GlassPanel>
 
