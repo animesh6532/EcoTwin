@@ -5,7 +5,6 @@ const WS_URL = API_BASE_URL.replace(/^http/, "ws") + "/ws/simulation";
 
 class WebSocketService {
   private socket: WebSocket | null = null;
-  private reconnectInterval = 3000;
   private maxReconnectAttempts = 10;
   private reconnectAttempts = 0;
   private isIntentionalDisconnect = false;
