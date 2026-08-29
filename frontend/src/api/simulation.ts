@@ -1,5 +1,5 @@
 import { apiClient, handleApiError } from "./client";
-import { SimulationStatus, SimulationConfig } from "../types";
+import { SimulationStatus, SimulationConfig, SimulationSessionSchema } from "../types";
 
 export async function startSimulation(config: SimulationConfig): Promise<SimulationStatus> {
   try {
@@ -50,6 +50,21 @@ export async function getSimulationStatus(): Promise<SimulationStatus> {
   try {
     // Modify URL slightly if status is directly in /simulation/status
     const response = await apiClient.get<SimulationStatus>("/simulation/status");
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+}
+
+export async function getSimulationSessions(filters?: {
+  controller?: string;
+  status?: string;
+  scenario?: string;
+}): Promise<SimulationSessionSchema[]> {
+  try {
+    const response = await apiClient.get<SimulationSessionSchema[]>("/simulation/sessions", {
+      params: filters,
+    });
     return response.data;
   } catch (error) {
     throw handleApiError(error);

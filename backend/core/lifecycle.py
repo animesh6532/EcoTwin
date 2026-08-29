@@ -21,6 +21,8 @@ def register_app_lifecycle_events(app):
         try:
             Base.metadata.create_all(bind=engine)
             logger.info("Database schemas initialized successfully.")
+            from backend.core.seeding import seed_demo_runs
+            seed_demo_runs()
         except Exception as e:
             logger.critical(f"Failed to initialize database schemas: {e}")
             

@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
-from backend.models.schemas import SimulationConfig, SimulationStatus
+from fastapi import APIRouter, HTTPException, status, Query
+from typing import List, Optional
+from backend.core.database import SessionLocal
+from backend.models.orm import SimulationSession
+from backend.models.schemas import SimulationConfig, SimulationStatus, SimulationSessionSchema
 from backend.services.simulation_service import simulation_service
 
 router = APIRouter()
@@ -58,6 +61,29 @@ def stop_simulation():
 def get_status():
     status_info = simulation_service.get_state()
     return _build_status_response(status_info)
+
+@router.get("/sessions", response_model=List[SimulationSessionSchema])
+def get_sessions(
+    controller: Optional[str] = Query(None, description="Filter by controller (ppo or fixed_time)"),
+    status: Optional[str] = Query(None, description="Filter by status (completed, running, stopped)"),
+    scenario: Optional[str] = Query(None, description="Filter by scenario")
+):
+    """
+    Returns list of simulation sessions, optionally filtered.
+    """
+    db = SessionLocal()
+    try:
+        query = db.query(SimulationSession)
+        if controller:
+            query = query.filter(SimulationSession.controller == controller)
+        if status:
+            query = query.filter(SimulationSession.status == status)
+        if scenario:
+            query = query.filter(SimulationSession.scenario == scenario)
+        sessions = query.order_by(SimulationSession.started_at.desc()).all()
+        return sessions
+    finally:
+        db.close()
 
 def _build_status_response(status_info: dict) -> SimulationStatus:
     step_len = 0.1
