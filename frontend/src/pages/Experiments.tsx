@@ -17,7 +17,7 @@ import {
   Clock,
   Flame,
   Wind,
-  Info
+  Settings
 } from "lucide-react";
 import { toast } from "../utils/toast";
 import { RunComparisonReport, ComparisonMetrics } from "../types";
