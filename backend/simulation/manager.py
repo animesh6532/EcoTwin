@@ -31,7 +31,7 @@ class SimulationManager:
         self.scenario = "normal"
         
         self._thread: Optional[threading.Thread] = None
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         
         # Observers
         self.on_step_callbacks = []
@@ -176,7 +176,7 @@ class SimulationManager:
             self.running = False
             self.paused = False
             
-        if self._thread:
+        if self._thread and threading.current_thread() != self._thread:
             self._thread.join(timeout=2.0)
             
         traci_client.close()
