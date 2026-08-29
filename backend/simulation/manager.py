@@ -50,7 +50,16 @@ class SimulationManager:
         """
         with self._lock:
             if self.running:
+                logger.warning("Simulation is already running. Cannot start a new session.")
                 return False
+                
+            # If traci_client is somehow still connected, force close it
+            if traci_client.connected:
+                logger.warning("TraCI client was still connected from a previous session. Closing it first.")
+                try:
+                    traci_client.close()
+                except Exception as e:
+                    logger.error(f"Failed to close residual TraCI connection: {e}")
                 
             self.session_id = str(uuid.uuid4())
             self.controller_type = config.controller
@@ -171,17 +180,25 @@ class SimulationManager:
         Safely stops the SUMO subprocess, joins background threads, and commits completed session.
         """
         with self._lock:
-            if not self.running:
-                return
+            is_running = self.running
             self.running = False
             self.paused = False
             
         if self._thread and threading.current_thread() != self._thread:
-            self._thread.join(timeout=2.0)
+            try:
+                self._thread.join(timeout=2.0)
+            except Exception as e:
+                logger.warning(f"Error joining simulation thread: {e}")
+            self._thread = None
             
-        traci_client.close()
-        self._save_session_db("completed" if self.step_count >= self.max_steps else "stopped")
-        logger.info("Simulation stopped successfully.")
+        try:
+            traci_client.close()
+        except Exception as e:
+            logger.warning(f"Error closing traci_client: {e}")
+            
+        if is_running:
+            self._save_session_db("completed" if self.step_count >= self.max_steps else "stopped")
+            logger.info("Simulation stopped successfully.")
 
     def get_status(self) -> Dict[str, Any]:
         """
