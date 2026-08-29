@@ -109,14 +109,16 @@ export interface MetricSnapshot {
   id?: number;
   session_id: string;
   step: number;
-  timestamp: string;
+  timestamp?: string;
+  simulation_time: number;
   vehicle_count: number;
   average_speed: number;
   average_waiting_time: number;
-  co2_emission: number;
-  nox_emission: number;
-  fuel_consumption: number;
-  reward: number;
+  total_co2: number;
+  total_nox: number;
+  total_fuel: number;
+  reward: number | null;
+  latency?: number | null;
 }
 
 export interface ComparisonMetrics {
