@@ -196,8 +196,6 @@ export default function Overview() {
       })
     }).addTo(map)
       .bindPopup('<div class="font-mono text-[10px] text-brand-orange bg-[#050505] p-2 border border-brand-orange/20 rounded-md">📍 You are here</div>');
-
-    map.flyTo([latitude, longitude], 16);
   }, [latitude, longitude, accuracy]);
 
   // Update vehicle markers

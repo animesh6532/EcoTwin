@@ -93,6 +93,8 @@ export default function Simulation() {
   const [maxSteps, setMaxSteps] = useState(1000);
   const [stepLength, setStepLength] = useState(1.0);
   const [initController, setInitController] = useState("fixed_time");
+  const [locationSource, setLocationSource] = useState<"berlin" | "user">("berlin");
+  const [radiusKm, setRadiusKm] = useState<number>(5);
   
   const [searchTerm, setSearchTerm] = useState("");
   const [showConfig, setShowConfig] = useState(false);
@@ -234,9 +236,43 @@ export default function Simulation() {
       })
     }).addTo(map)
       .bindPopup('<div class="font-mono text-[10px] text-brand-orange bg-[#050505] p-2 border border-brand-orange/20 rounded-md">📍 You are here</div>');
-
-    map.flyTo([latitude, longitude], 16);
   }, [latitude, longitude, accuracy]);
+
+  // Draw and update Simulation Area Circle
+  const simulationCircleRef = useRef<L.Circle | null>(null);
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (simulationCircleRef.current) {
+      simulationCircleRef.current.remove();
+      simulationCircleRef.current = null;
+    }
+
+    let center: [number, number] = [CENTER_LAT, CENTER_LNG];
+    if (locationSource === "user" && latitude !== null && longitude !== null) {
+      center = [latitude, longitude];
+    }
+
+    const radiusMeters = (locationSource === "user" ? radiusKm : 1.5) * 1000;
+
+    simulationCircleRef.current = L.circle(center, {
+      radius: radiusMeters,
+      color: "#FF9128",
+      weight: 1.5,
+      dashArray: "5, 5",
+      fillColor: "#FF8A00",
+      fillOpacity: 0.03,
+    }).addTo(map)
+      .bindPopup(`<div class="font-mono text-[10px] text-brand-orange bg-[#050505] p-2 border border-brand-orange/20 rounded-md">🧪 Simulation Area (${locationSource === "user" ? `${radiusKm} km Radius` : "Berlin Demo"})</div>`);
+
+    // Zoom and center depending on source
+    if (locationSource === "user" && latitude !== null && longitude !== null) {
+      map.flyTo([latitude, longitude], 15 - Math.floor(radiusKm / 5));
+    } else {
+      map.flyTo([CENTER_LAT, CENTER_LNG], 16);
+    }
+  }, [locationSource, radiusKm, latitude, longitude]);
 
   // Update Pollution Grid
   useEffect(() => {
@@ -533,7 +569,10 @@ export default function Simulation() {
                   Enable location to show your position relative to simulation grids.
                 </div>
                 <button
-                  onClick={detectLocation}
+                  onClick={() => {
+                    detectLocation();
+                    setLocationSource("user");
+                  }}
                   className="w-full py-1.5 bg-brand-orange hover:bg-brand-bright text-[#120D09] font-bold rounded-lg text-[8px] uppercase tracking-widest transition-all cursor-pointer shadow-md text-center"
                 >
                   Use My Location
@@ -555,34 +594,17 @@ export default function Simulation() {
             )}
 
             <button
-              onClick={() => mapInstanceRef.current?.flyTo([CENTER_LAT, CENTER_LNG], 16)}
+              onClick={() => {
+                setLocationSource("berlin");
+                mapInstanceRef.current?.flyTo([CENTER_LAT, CENTER_LNG], 16);
+              }}
               className="w-full py-1.5 bg-white/5 border border-white/10 hover:border-brand-orange/40 hover:bg-[#FF8A00]/10 rounded-lg text-[7px] uppercase tracking-widest transition-all text-text-cream font-bold cursor-pointer text-center"
             >
               Jump to Simulation Area
             </button>
           </div>
 
-          {tileError && (
-            <div className="absolute inset-0 bg-[#120D09]/92 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center space-y-3 font-mono p-6 border border-eco-danger/30 rounded-[24px]">
-              <AlertTriangle className="h-8 w-8 text-eco-danger animate-pulse" />
-              <h4 className="font-bold text-[#FFF7ED] text-xs uppercase tracking-widest">Basemap unavailable</h4>
-              <p className="text-[#CBB9A6] text-[11px] font-sans max-w-xs">Map tiles failed to load. The simulation console remains fully operational.</p>
-              <button 
-                onClick={() => setTileError(false)} 
-                className="px-3 py-1 bg-white/5 border border-white/10 hover:border-brand-orange/40 hover:bg-[#FF8A00]/10 rounded-lg text-[9px] uppercase tracking-wider font-bold transition-all text-text-cream cursor-pointer pointer-events-auto animate-fade-in"
-              >
-                Retry Map Tiles
-              </button>
-            </div>
-          )}
 
-          {!running && (
-            <div className="absolute inset-0 bg-[#120D09]/80 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center space-y-3 font-mono p-6 rounded-[24px]">
-              <Leaf className="h-8 w-8 text-brand-orange animate-pulse" />
-              <h4 className="font-bold text-[#FFF7ED] text-xs uppercase tracking-widest">Digital Twin Offline</h4>
-              <p className="text-[#CBB9A6] text-[11px] font-sans max-w-xs">Start the SUMO simulation session to view dynamic telemetry and intersections.</p>
-            </div>
-          )}
 
           {/* Config Drawer overlay inside map */}
           {showConfig && !running && (
@@ -604,13 +626,51 @@ export default function Simulation() {
 
               <div className="space-y-3 font-mono">
                 <div>
+                  <label className="block text-text-pale mb-1 font-bold">Simulation Area</label>
+                  <select 
+                    value={locationSource} 
+                    onChange={(e) => setLocationSource(e.target.value as "berlin" | "user")}
+                    className="w-full p-2 border border-brand-orange/20 rounded-lg bg-[#120D09] text-text-cream"
+                  >
+                    <option value="berlin">Demo Simulation — Berlin</option>
+                    <option value="user">Use My Location (Dynamic)</option>
+                  </select>
+                </div>
+
+                {locationSource === "user" && (
+                  <>
+                    <div>
+                      <label className="block text-text-pale mb-1 font-bold">Simulation Radius</label>
+                      <select 
+                        value={radiusKm} 
+                        onChange={(e) => setRadiusKm(parseInt(e.target.value))}
+                        className="w-full p-2 border border-brand-orange/20 rounded-lg bg-[#120D09] text-text-cream"
+                      >
+                        <option value={1}>1 km</option>
+                        <option value={2}>2 km</option>
+                        <option value={5}>5 km</option>
+                        <option value={10}>10 km</option>
+                      </select>
+                    </div>
+                    {latitude === null && (
+                      <div className="text-[10px] text-brand-orange font-bold animate-pulse">
+                        ⚠️ Please query/grant location permission in the top-right panel.
+                      </div>
+                    )}
+                    <div className="text-[9px] text-[#FF8A00] leading-normal bg-white/5 p-2 rounded-lg border border-[#FF8A00]/20 font-sans">
+                      Note: Dynamic network conversion is offline. Demo simulation Berlin is active as fallback.
+                    </div>
+                  </>
+                )}
+
+                <div>
                   <label className="block text-text-pale mb-1 font-bold">Scenario file</label>
                   <select 
                     value={scenario} 
                     onChange={(e) => setScenario(e.target.value)}
                     className="w-full p-2 border border-brand-orange/20 rounded-lg bg-[#120D09] text-text-cream"
                   >
-                    <option value="normal">Normal City Grid</option>
+                    <option value="normal">Normal City Grid (Berlin Demo)</option>
                     <option value="training">Training Layout (SUMO)</option>
                     <option value="heavy">Heavy Rush-Hour Grid</option>
                   </select>

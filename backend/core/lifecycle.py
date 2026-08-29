@@ -1,13 +1,22 @@
 import os
 import subprocess
+import asyncio
 from backend.core.logging import logger
 from backend.core.database import engine, Base
 from backend.ml.model_loader import model_loader
 from backend.simulation.manager import simulation_manager
+from backend.services.simulation_service import simulation_service
 
 def register_app_lifecycle_events(app):
     @app.on_event("startup")
     async def startup_event():
+        logger.info("Capturing running ASGI event loop...")
+        try:
+            simulation_service.loop = asyncio.get_running_loop()
+            logger.info("ASGI event loop captured successfully.")
+        except Exception as e:
+            logger.error(f"Failed to capture running event loop: {e}")
+
         logger.info("Initializing EcoTwin database schemas...")
         try:
             Base.metadata.create_all(bind=engine)

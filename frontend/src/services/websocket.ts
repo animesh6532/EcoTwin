@@ -10,8 +10,13 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private isIntentionalDisconnect = false;
   private heartbeatInterval: number | null = null;
+  private reconnectTimeout: number | any = null;
 
   connect() {
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     this.isIntentionalDisconnect = false;
     const store = useSimulationStore.getState();
     
@@ -94,18 +99,29 @@ class WebSocketService {
       return;
     }
 
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+
     this.reconnectAttempts++;
-    console.log(`Scheduling auto-reconnect in ${this.reconnectInterval}ms (Attempt ${this.reconnectAttempts})...`);
-    setTimeout(() => {
+    // Exponential backoff: starts at 2s, increases to 3s, 4.5s, 6.75s... up to 15s max
+    const backoffDelay = Math.min(15000, 2000 * Math.pow(1.5, this.reconnectAttempts));
+    
+    console.log(`Scheduling auto-reconnect in ${backoffDelay.toFixed(0)}ms (Attempt ${this.reconnectAttempts})...`);
+    this.reconnectTimeout = setTimeout(() => {
       if (!this.isIntentionalDisconnect) {
         this.connect();
       }
-    }, this.reconnectInterval);
+    }, backoffDelay);
   }
 
   disconnect() {
     this.isIntentionalDisconnect = true;
     this.stopHeartbeat();
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
     if (this.socket) {
       this.socket.close();
       this.socket = null;

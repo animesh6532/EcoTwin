@@ -12,6 +12,7 @@ from backend.websocket.manager import manager
 class SimulationService:
     def __init__(self):
         self.config = None
+        self.loop = None
         simulation_manager.register_step_callback(self._on_step_callback)
 
     def start(self, config: SimulationConfig) -> bool:
@@ -89,11 +90,12 @@ class SimulationService:
         }
         
         # Dispatch to all WebSocket listeners safely on active loop
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                loop.create_task(manager.broadcast(payload))
-        except RuntimeError:
-            pass
+        if self.loop and self.loop.is_running():
+            try:
+                asyncio.run_coroutine_threadsafe(manager.broadcast(payload), self.loop)
+            except Exception as e:
+                logger.error(f"Error dispatching websocket broadcast: {e}")
+        else:
+            logger.warning("ASGI event loop is not captured or not running, skipping websocket broadcast.")
 
 simulation_service = SimulationService()
