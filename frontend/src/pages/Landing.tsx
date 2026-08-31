@@ -70,19 +70,19 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
         .animate-delay-300 { animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 300ms forwards; opacity: 0; }
         .animate-delay-450 { animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 450ms forwards; opacity: 0; }
       `}</style>
-      
+
       {/* Fixed cinematic background image */}
-      <div 
+      <div
         className="fixed inset-0 bg-cover bg-center transition-transform duration-10000 ease-out scale-105 pointer-events-none z-0 opacity-45 filter brightness-[0.5] contrast-[1.02]"
-        style={{ 
+        style={{
           backgroundImage: `url('/images/ecotwin-city-hero.png')`,
           backgroundAttachment: "fixed"
         }}
       />
-      
+
       {/* Controlled dark gradient overlays (The city remains visible) */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-0" 
+      <div
+        className="fixed inset-0 pointer-events-none z-0"
         style={{
           background: `
             linear-gradient(to bottom, rgba(5, 8, 12, 0.35), rgba(18, 12, 7, 0.28)),
@@ -93,12 +93,12 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
       {/* Scrollable storyboard container */}
       <div className="relative z-10 flex flex-col justify-between min-h-screen w-full max-w-7xl mx-auto px-8 md:px-12">
-        
+
         {/* Floating landing-page navbar */}
         <header className="fixed top-6 left-8 right-8 z-50 flex items-center justify-between pointer-events-none max-w-7xl mx-auto">
-          <div 
-            style={{ 
-              background: "rgba(8, 7, 6, 0.72)", 
+          <div
+            style={{
+              background: "rgba(8, 7, 6, 0.72)",
               borderColor: "rgba(255, 145, 40, 0.20)",
               backdropFilter: "blur(22px)",
               boxShadow: "0 15px 50px rgba(0,0,0,0.45)",
@@ -131,7 +131,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
                 <span className={`h-1.5 w-1.5 rounded-full ${isReady ? "bg-[#22C55E] shadow-[0_0_8px_#22C55E]" : "bg-[#FFB84D] animate-pulse"}`} />
                 <span>{isReady ? "SYSTEM READY" : "CONNECTING"}</span>
               </div>
-              
+
               <button
                 onClick={onEnter}
                 style={{
@@ -155,18 +155,17 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
             const isActive = activeSection === idx;
             const isCompleted = activeSection > idx;
             return (
-              <div 
-                key={sec.id} 
+              <div
+                key={sec.id}
                 className="flex items-center gap-3 cursor-pointer transition-colors duration-300"
                 onClick={() => window.scrollTo({ top: idx * window.innerHeight, behavior: "smooth" })}
               >
-                <span className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
-                  isActive 
-                    ? "bg-[#FF8A00] scale-150 shadow-[0_0_8px_#FF8A00]" 
-                    : isCompleted 
-                      ? "bg-[#FFB84D]" 
+                <span className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${isActive
+                    ? "bg-[#FF8A00] scale-150 shadow-[0_0_8px_#FF8A00]"
+                    : isCompleted
+                      ? "bg-[#FFB84D]"
                       : "bg-[#24150B]"
-                }`} />
+                  }`} />
                 <span className={isActive ? "text-[#FF8A00]" : "opacity-0 hover:opacity-100"}>
                   {sec.label}
                 </span>
@@ -177,10 +176,10 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
         {/* Two-Column Story Board */}
         <div className="flex flex-col lg:flex-row gap-12 w-full pt-32">
-          
+
           {/* Left panel storyboard */}
           <div className="flex-1 space-y-0 relative z-10">
-            
+
             {/* HERO SECTION */}
             <div className="min-h-screen flex flex-col justify-center py-12 space-y-8">
               <div className="animate-delay-0 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FF8A00]/10 border border-[#FF8A00]/20 text-[9px] font-bold text-[#FFB84D] uppercase tracking-[0.25em] w-max">
@@ -188,11 +187,11 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
               </div>
 
               <div className="space-y-4">
-                <h1 
+                <h1
                   className="animate-delay-100 font-black text-[#FFF7ED] tracking-tight font-sans leading-none"
-                  style={{ 
+                  style={{
                     fontSize: "clamp(64px, 10vw, 150px)",
-                    textShadow: "0 0 60px rgba(255,122,0,0.12)" 
+                    textShadow: "0 0 60px rgba(255,122,0,0.12)"
                   }}
                 >
                   ECOTWIN
@@ -221,7 +220,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
                   <span>ENTER OPERATIONS CENTER</span>
                   <ArrowUpRight className="h-4.5 w-4.5" />
                 </button>
-                
+
                 <button
                   onClick={() => navigate("/insights")}
                   style={{
@@ -240,55 +239,55 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
               <div className="animate-delay-450 pt-8 border-t border-[rgba(255,145,40,0.16)] max-w-xl">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-[#9D8C7B] block mb-4 font-mono">System Architecture Pipeline</span>
                 <div className="flex items-center justify-between gap-1 md:gap-2 font-mono text-[9px] font-bold text-[#FFF7ED]">
-                  
+
                   {/* Traffic */}
                   <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-20 text-center relative">
                     <span className="text-[#FFB347]">TRAFFIC</span>
                   </div>
-                  
+
                   {/* Connector Arrow */}
                   <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "0s" }}>→</span>
-                  
+
                   {/* SUMO */}
                   <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-20 text-center relative">
                     <span className="text-[#FF8A00]">SUMO</span>
                   </div>
 
                   <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "0.4s" }}>→</span>
-                  
+
                   {/* TRACI */}
                   <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-20 text-center relative">
                     <span className="text-[#FFB347]">TRACI</span>
                   </div>
 
                   <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "0.8s" }}>→</span>
-                  
+
                   {/* AI / PPO */}
                   <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-20 text-center relative">
                     <span className="text-[#FF8A00]">AI / PPO</span>
                   </div>
 
                   <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "1.2s" }}>→</span>
-                  
+
                   {/* OPTIMIZATION */}
                   <div className="flex flex-col items-center bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-lg w-22 text-center relative">
                     <span className="text-[#FFB347]">OPTIMIZE</span>
                   </div>
 
                   <span className="text-[#9D8C7B] animate-pipeline-arrow" style={{ animationDelay: "1.6s" }}>→</span>
-                  
+
                   {/* CARBON */}
                   <div className="flex flex-col items-center bg-[#FF8A00]/10 border border-[#FF8A00]/30 px-2.5 py-1.5 rounded-lg w-22 text-center relative shadow-[0_0_15px_rgba(255,122,0,0.15)] animate-pulse">
                     <span className="text-[#FFB347]">CARBON</span>
                   </div>
-                  
+
                 </div>
               </div>
             </div>
 
             {/* SECTION 01: CITY */}
             <div className="min-h-screen flex flex-col justify-center py-12">
-              <div 
+              <div
                 className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
                 style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
@@ -306,7 +305,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
             {/* SECTION 02: SIMULATE */}
             <div className="min-h-screen flex flex-col justify-center py-12">
-              <div 
+              <div
                 className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
                 style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
@@ -324,7 +323,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
             {/* SECTION 03: OBSERVE */}
             <div className="min-h-screen flex flex-col justify-center py-12">
-              <div 
+              <div
                 className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
                 style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
@@ -364,7 +363,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
             {/* SECTION 04: MEASURE */}
             <div className="min-h-screen flex flex-col justify-center py-12">
-              <div 
+              <div
                 className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
                 style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
@@ -382,7 +381,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
             {/* SECTION 05: LEARN */}
             <div className="min-h-screen flex flex-col justify-center py-12">
-              <div 
+              <div
                 className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
                 style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
@@ -400,7 +399,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
             {/* SECTION 06: OPTIMIZE */}
             <div className="min-h-screen flex flex-col justify-center py-12">
-              <div 
+              <div
                 className="p-8 border space-y-4 max-w-xl shadow-2xl rounded-[20px] transition-all duration-300"
                 style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
@@ -418,7 +417,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
             {/* SECTION 07: OPERATE (Final CTA) */}
             <div className="min-h-screen flex flex-col justify-center py-12 space-y-6">
-              <div 
+              <div
                 className="p-8 border space-y-6 max-w-xl shadow-2xl rounded-[24px]"
                 style={{ background: "rgba(25, 20, 16, 0.72)", borderColor: "rgba(255, 184, 77, 0.20)", backdropFilter: "blur(20px) saturate(120%)" }}
               >
@@ -433,7 +432,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
                 <p className="text-xs text-[#D6C3AE] leading-relaxed font-sans font-normal">
                   EcoTwin transforms traffic simulation into actionable smart city intelligence. Monitor grids, inspect vehicles, and control signal overrides.
                 </p>
-                
+
                 <button
                   onClick={onEnter}
                   style={{
@@ -454,7 +453,7 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
 
           {/* Right Panel: Sticky Glass Viewport */}
           <div className="hidden lg:block lg:w-1/2 relative">
-            <div 
+            <div
               className="sticky top-[15vh] h-[70vh] w-full rounded-[24px] overflow-hidden border shadow-[0_30px_100px_rgba(0,0,0,0.7)] select-none flex flex-col justify-between"
               style={{
                 background: "rgba(25, 20, 16, 0.72)",
@@ -463,10 +462,10 @@ export default function Landing({ onEnter, navigate }: LandingProps) {
               }}
             >
               <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.3)_50%)] bg-[size:100%_4px] pointer-events-none z-10 opacity-30" />
-              
-              <img 
-                src="/images/ecotwin-twin-viewport.png" 
-                alt="Digital Twin Viewport" 
+
+              <img
+                src="/images/ecotwin-twin-viewport.png"
+                alt="Digital Twin Viewport"
                 className="absolute inset-0 w-full h-full object-cover filter blur-[0.5px] opacity-75 transition-all duration-700 scale-105"
                 style={
                   activeSection > 0
