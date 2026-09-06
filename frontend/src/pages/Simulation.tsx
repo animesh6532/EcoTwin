@@ -29,7 +29,7 @@ import { toast } from "../utils/toast";
 import { SimulationStatus } from "../types";
 import { GlassCard } from "../components/glass/GlassCard";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
-import { useGeolocation } from "../hooks/useGeolocation";
+import { useLocationStore } from "../store/locationStore";
 
 const CENTER_LAT = 52.5200;
 const CENTER_LNG = 13.4050;
@@ -54,11 +54,14 @@ export default function Simulation() {
     latitude, 
     longitude, 
     accuracy, 
+    city,
+    locality,
+    source,
     loading: geoLoading, 
     error: geoError, 
-    detectLocation, 
+    detectBrowserLocation, 
     clearLocation 
-  } = useGeolocation();
+  } = useLocationStore();
 
   const {
     running,

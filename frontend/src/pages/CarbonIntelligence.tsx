@@ -43,11 +43,16 @@ export default function CarbonIntelligence() {
     latitude, 
     longitude, 
     accuracy, 
+    city,
+    locality,
+    formattedAddress,
+    source,
     loading: geoLoading, 
     error: geoError, 
-    detectLocation, 
-    clearLocation 
-  } = useGeolocation();
+    detectBrowserLocation, 
+    clearLocation,
+    setShowOnboardingModal
+  } = useLocationStore();
 
   // Queries
   const { data: currentEmissions } = useQuery({
@@ -273,7 +278,10 @@ export default function CarbonIntelligence() {
         </div>
         
         {/* Top parameters status */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 font-mono text-[9px]">
+          <span className="px-2.5 py-1 rounded border bg-[#FF8A00]/10 border-[#FF8A00]/30 text-[#FF8A00] font-bold uppercase tracking-wider">
+            MODEL: SUMO HBEFA3 (ESTIMATED)
+          </span>
           <GlassStatus label="ACCUMULATED CO₂" status={`${accumulatedEmissions ? (accumulatedEmissions.co2 / 1000).toFixed(1) : 0} g`} />
           <GlassStatus label="ACCUMULATED NOₓ" status={`${accumulatedEmissions ? (accumulatedEmissions.nox / 1000).toFixed(2) : 0} g`} />
         </div>
