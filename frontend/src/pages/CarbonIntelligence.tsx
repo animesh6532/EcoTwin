@@ -50,7 +50,6 @@ export default function CarbonIntelligence() {
     loading: geoLoading, 
     error: geoError, 
     detectBrowserLocation, 
-    clearLocation,
     setShowOnboardingModal
   } = useLocationStore();
 
@@ -378,8 +377,11 @@ export default function CarbonIntelligence() {
             </div>
 
             {/* Geolocation Controls Panel */}
-            <div className="absolute bottom-4 right-4 z-20 bg-[#120D09]/85 border border-white/5 p-3.5 rounded-xl font-mono text-[8px] uppercase tracking-wider space-y-3 max-w-[200px] pointer-events-auto shadow-xl">
-              <span className="text-text-muted font-bold block mb-1">Geolocation</span>
+            <div className="absolute bottom-4 right-4 z-20 bg-[#120D09]/85 border border-white/5 p-3.5 rounded-xl font-mono text-[8px] uppercase tracking-wider space-y-2 max-w-[200px] pointer-events-auto shadow-xl">
+              <div className="flex items-center justify-between border-b border-white/10 pb-1">
+                <span className="text-text-muted font-bold block">Target Location</span>
+                <span className="text-[7px] text-[#FF8A00] font-bold">{source}</span>
+              </div>
               
               {geoLoading ? (
                 <div className="flex items-center gap-2 text-brand-amber">
@@ -387,17 +389,12 @@ export default function CarbonIntelligence() {
                   <span>Detecting...</span>
                 </div>
               ) : latitude !== null && longitude !== null ? (
-                <div className="space-y-2">
-                  <div className="text-[9px] text-[#FFF7ED] font-bold">📍 You are here</div>
+                <div className="space-y-1">
+                  <div className="text-[9px] text-[#FFF7ED] font-bold truncate">📍 {city || locality || "Target Area"}</div>
                   <div className="text-[8px] text-text-pale lowercase tracking-normal truncate">
-                    lat: {latitude.toFixed(4)}, lon: {longitude.toFixed(4)}
+                    {formattedAddress || `${latitude.toFixed(4)}°, ${longitude.toFixed(4)}`}
                   </div>
-                  {Math.abs(latitude - CENTER_LAT) > 0.5 || Math.abs(longitude - CENTER_LNG) > 0.5 ? (
-                    <div className="text-[7px] text-[#FFB84D] normal-case leading-normal">
-                      Simulation network runs in Berlin, Germany.
-                    </div>
-                  ) : null}
-                  <div className="flex gap-1 pt-1.5">
+                  <div className="flex gap-1 pt-1">
                     <button
                       onClick={() => mapInstanceRef.current?.flyTo([latitude, longitude], 16)}
                       className="flex-1 px-2 py-1 bg-white/5 hover:bg-[#FF8A00]/15 hover:border-brand-orange/40 border border-white/10 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-text-cream"
@@ -405,15 +402,10 @@ export default function CarbonIntelligence() {
                       Show Me
                     </button>
                     <button
-                      onClick={() => {
-                        clearLocation();
-                        if (userMarkerRef.current) userMarkerRef.current.remove();
-                        if (userCircleRef.current) userCircleRef.current.remove();
-                        mapInstanceRef.current?.flyTo([CENTER_LAT, CENTER_LNG], 16.5);
-                      }}
-                      className="px-2 py-1 bg-white/5 hover:bg-eco-danger/10 hover:border-eco-danger/40 border border-white/10 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-[#FF4D4D]"
+                      onClick={() => setShowOnboardingModal(true)}
+                      className="px-2 py-1 bg-[#FF8A00]/15 hover:bg-[#FF8A00]/30 border border-[#FF8A00]/30 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-[#FF8A00]"
                     >
-                      Clear
+                      Change
                     </button>
                   </div>
                 </div>
@@ -423,7 +415,7 @@ export default function CarbonIntelligence() {
                     Enable location to show your position relative to simulation grids.
                   </div>
                   <button
-                    onClick={detectLocation}
+                    onClick={() => detectBrowserLocation()}
                     className="w-full py-1.5 bg-brand-orange hover:bg-brand-bright text-[#120D09] font-bold rounded-lg text-[8px] uppercase tracking-widest transition-all cursor-pointer shadow-md text-center"
                   >
                     Use My Location
@@ -436,7 +428,7 @@ export default function CarbonIntelligence() {
                   <div className="font-bold uppercase tracking-wider text-[7px]">Error:</div>
                   <div>{geoError}</div>
                   <button
-                    onClick={detectLocation}
+                    onClick={() => detectBrowserLocation()}
                     className="mt-1 w-full py-1 bg-white/5 hover:bg-eco-danger/20 border border-[#FF4D4D]/20 rounded text-[7px] font-bold uppercase cursor-pointer"
                   >
                     Try Again

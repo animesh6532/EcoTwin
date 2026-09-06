@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSimulationStore } from "../store/simulationStore";
 import { getTrafficLights, getTrafficLightDetail, setTrafficLightAction, getOverrideHistory } from "../api/trafficLights";
 import { setRLMode } from "../api/rl";
-import { getNetworkLocation } from "../api/location";
 import { TrafficLight } from "../types";
 import { toast } from "../utils/toast";
 import { useLocationStore } from "../store/locationStore";
@@ -23,7 +22,7 @@ import { ManualOverrideModal } from "../components/TrafficLights/ManualOverrideM
 import { TrafficMap } from "../components/TrafficLights/TrafficMap";
 import { GlassPanel } from "../components/glass/GlassPanel";
 import { GlassButton } from "../components/glass/GlassButton";
-import { ShieldAlert, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 
 export default function TrafficNetwork() {
   const queryClient = useQueryClient();
@@ -57,12 +56,6 @@ export default function TrafficNetwork() {
     detectBrowserLocation,
     clearLocation,
   } = useLocationStore();
-
-  // Fetch SUMO Network Location Boundaries & Projection Metadata
-  const { data: networkLocation } = useQuery({
-    queryKey: ["networkLocation"],
-    queryFn: getNetworkLocation,
-  });
 
   // Discover SUMO Junction IDs
   const { data: tlIds, isLoading: isLoadingTlList } = useQuery({

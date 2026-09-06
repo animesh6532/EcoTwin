@@ -236,7 +236,7 @@ export interface ReverseGeocodeResult {
   state: string;
   country: string;
   locality: string;
-  formatted_address: str | string;
+  formatted_address: string;
   latitude: number;
   longitude: number;
   nearby_roads: string[];

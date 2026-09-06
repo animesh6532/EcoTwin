@@ -12,7 +12,7 @@ import { useLocationStore } from "../store/locationStore";
 
 export default function ReinforcementLearning() {
   const wsState = useSimulationStore();
-  const { city, locality, source, isDemoMode } = useLocationStore();
+  const { city, locality, source } = useLocationStore();
 
   // Queries
   const { data: rlStatus, isLoading: isLoadingStatus, refetch: refetchStatus } = useQuery<RLStatus, Error>({

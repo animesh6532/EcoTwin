@@ -1,5 +1,5 @@
 import React from "react";
-import { Cpu, Zap, Activity, CheckCircle, AlertTriangle } from "lucide-react";
+import { Cpu, Zap, CheckCircle } from "lucide-react";
 import { GlassButton } from "../glass/GlassButton";
 
 interface ControllerPanelProps {

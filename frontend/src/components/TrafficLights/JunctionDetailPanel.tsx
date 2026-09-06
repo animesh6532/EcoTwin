@@ -1,5 +1,5 @@
 import React from "react";
-import { Cpu, Clock, RefreshCw, ChevronRight, Layers, Navigation } from "lucide-react";
+import { Cpu, Clock, ChevronRight, Layers, Navigation } from "lucide-react";
 import { TrafficLight } from "../../types";
 
 interface JunctionDetailPanelProps {

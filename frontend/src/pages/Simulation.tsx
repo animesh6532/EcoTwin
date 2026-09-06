@@ -54,9 +54,6 @@ export default function Simulation() {
     latitude, 
     longitude, 
     accuracy, 
-    city,
-    locality,
-    source,
     loading: geoLoading, 
     error: geoError, 
     detectBrowserLocation, 
@@ -573,7 +570,7 @@ export default function Simulation() {
                 </div>
                 <button
                   onClick={() => {
-                    detectLocation();
+                    detectBrowserLocation();
                     setLocationSource("user");
                   }}
                   className="w-full py-1.5 bg-brand-orange hover:bg-brand-bright text-[#120D09] font-bold rounded-lg text-[8px] uppercase tracking-widest transition-all cursor-pointer shadow-md text-center"
@@ -588,7 +585,7 @@ export default function Simulation() {
                 <div className="font-bold uppercase tracking-wider text-[7px]">Error:</div>
                 <div>{geoError}</div>
                 <button
-                  onClick={detectLocation}
+                  onClick={() => detectBrowserLocation()}
                   className="mt-1 w-full py-1 bg-white/5 hover:bg-eco-danger/20 border border-[#FF4D4D]/20 rounded text-[7px] font-bold uppercase cursor-pointer"
                 >
                   Try Again
