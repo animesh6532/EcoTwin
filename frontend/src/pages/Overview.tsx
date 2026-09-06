@@ -36,7 +36,7 @@ import { toast } from "../utils/toast";
 import { webSocketService } from "../services/websocket";
 import L from "leaflet";
 import { GlassCard } from "../components/glass/GlassCard";
-import { useGeolocation } from "../hooks/useGeolocation";
+import { useLocationStore } from "../store/locationStore";
 import { GlassButton } from "../components/glass/GlassButton";
 import { GlassMetric } from "../components/glass/GlassMetric";
 import { GlassChart } from "../components/glass/GlassChart";
@@ -68,8 +68,14 @@ export default function Overview() {
   const { 
     latitude, 
     longitude, 
-    accuracy
-  } = useGeolocation();
+    accuracy,
+    city,
+    locality,
+    formattedAddress,
+    source,
+    isDemoMode,
+    setShowOnboardingModal
+  } = useLocationStore();
   
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -528,36 +534,56 @@ export default function Overview() {
           </div>
 
           {/* Right Geolocation panel (Jump controls) */}
-          <div className="absolute top-4 right-4 z-20 bg-[#120D09]/85 border border-white/5 p-3 rounded-xl font-mono text-[8px] uppercase tracking-wider space-y-2.5 max-w-[180px] pointer-events-auto shadow-xl">
-            <span className="text-text-muted font-bold block">Location Context</span>
+          <div className="absolute top-4 right-4 z-20 bg-[#120D09]/90 backdrop-blur-md border border-[#FF8A00]/25 p-3 rounded-xl font-mono text-[8px] uppercase tracking-wider space-y-2 max-w-[200px] pointer-events-auto shadow-2xl text-left">
+            <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+              <span className="text-text-muted font-bold block">Target Location</span>
+              <span className="text-[7px] font-bold px-1.5 py-0.5 rounded bg-[#FF8A00]/15 text-[#FF8A00] border border-[#FF8A00]/30">
+                {source}
+              </span>
+            </div>
+
             {latitude !== null && longitude !== null ? (
-              <div className="space-y-1.5">
-                <div className="text-[8px] text-[#FFF7ED] font-bold">📍 Your Location</div>
-                <div className="text-[7px] text-text-pale lowercase tracking-normal truncate">
-                  {latitude.toFixed(4)}, {longitude.toFixed(4)}
+              <div className="space-y-1">
+                <div className="text-[9px] text-[#FFF7ED] font-bold truncate">
+                  📍 {city || locality || "Target Region"}
                 </div>
-                <button
-                  onClick={() => mapInstanceRef.current?.flyTo([latitude, longitude], 16)}
-                  className="w-full py-1 bg-white/5 hover:bg-[#FF8A00]/15 hover:border-brand-orange/40 border border-white/10 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-text-cream"
-                >
-                  Show Me
-                </button>
+                <div className="text-[7px] text-text-pale lowercase tracking-normal truncate">
+                  {formattedAddress || `${latitude.toFixed(4)}°, ${longitude.toFixed(4)}`}
+                </div>
+                <div className="flex gap-1 pt-1">
+                  <button
+                    onClick={() => mapInstanceRef.current?.flyTo([latitude, longitude], 16)}
+                    className="flex-1 py-1 bg-white/5 hover:bg-[#FF8A00]/20 hover:border-[#FF8A00]/40 border border-white/10 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-text-cream"
+                  >
+                    Center Map
+                  </button>
+                  <button
+                    onClick={() => setShowOnboardingModal(true)}
+                    className="py-1 px-2 bg-[#FF8A00]/15 hover:bg-[#FF8A00]/30 border border-[#FF8A00]/30 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-[#FF8A00]"
+                  >
+                    Change
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="text-text-pale text-[7px] leading-relaxed normal-case">
-                Browser location unavailable.
+              <div className="space-y-1.5">
+                <div className="text-text-pale text-[7px] leading-relaxed normal-case">
+                  Target location not set.
+                </div>
+                <button
+                  onClick={() => setShowOnboardingModal(true)}
+                  className="w-full py-1 bg-[#FF8A00] text-black rounded text-[8px] font-bold uppercase cursor-pointer"
+                >
+                  Set Location
+                </button>
               </div>
             )}
-            <div className="border-t border-white/5 pt-2 space-y-1">
-              <span className="text-[7px] text-text-muted font-bold block">Simulation Area</span>
-              <span className="text-[8px] text-brand-orange font-bold">Berlin, Germany</span>
-              <button
-                onClick={() => mapInstanceRef.current?.flyTo([CENTER_LAT, CENTER_LNG], 16.5)}
-                className="w-full py-1 bg-[#FF8A00]/10 hover:bg-[#FF8A00]/20 border border-brand-orange/20 rounded text-[7px] font-bold uppercase transition-all cursor-pointer text-brand-orange mt-1.5"
-              >
-                Center Simulation
-              </button>
-            </div>
+
+            {isDemoMode && (
+              <div className="border-t border-white/10 pt-1.5 text-[7px] text-[#FFB84D] font-bold">
+                ⚡ BENCHMARK DEMO GRID (BERLIN MITTE)
+              </div>
+            )}
           </div>
 
           {tileError && (

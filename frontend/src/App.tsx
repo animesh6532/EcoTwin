@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import FloatingNav from "./components/layout/FloatingNav";
 import SystemStatusBar from "./components/layout/SystemStatusBar";
+import GlobalDataBadge from "./components/layout/GlobalDataBadge";
+import LocationOnboardingModal from "./components/layout/LocationOnboardingModal";
 import Overview from "./pages/Overview";
 import Simulation from "./pages/Simulation";
 import TrafficNetwork from "./pages/TrafficNetwork";
@@ -15,9 +17,18 @@ import ProjectInsights from "./pages/ProjectInsights";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { BackgroundLayer } from "./components/layout/BackgroundLayer";
 import { CursorGlow } from "./components/layout/CursorGlow";
+import { useLocationStore } from "./store/locationStore";
 
 export default function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const { latitude, source, detectBrowserLocation } = useLocationStore();
+
+  // Initial location detection on app launch if unresolved
+  useEffect(() => {
+    if (latitude === null && source === "UNRESOLVED") {
+      detectBrowserLocation();
+    }
+  }, []);
 
   // Reactive URL tracking
   useEffect(() => {
@@ -68,7 +79,8 @@ export default function App() {
     return (
       <>
         <CursorGlow />
-        <Landing onEnter={() => navigate("/overview")} navigate={navigate} />;
+        <Landing onEnter={() => navigate("/overview")} navigate={navigate} />
+        <LocationOnboardingModal />
       </>
     );
   }
@@ -80,15 +92,18 @@ export default function App() {
       {/* Global cursor glow follow */}
       <CursorGlow />
 
+      {/* Location Onboarding Modal */}
+      <LocationOnboardingModal />
+
       {/* Cinematic background map and overlays */}
       <BackgroundLayer />
 
       <div className="flex-1 flex flex-col z-10 w-full relative">
-        {/* Floating Header capsule (Navbar) */}
-        <header className="w-full flex items-center justify-center pt-6 px-8 sticky top-0 z-50 pointer-events-none">
+        {/* Floating Header capsule (Navbar & Global Status) */}
+        <header className="w-full flex flex-col items-center justify-center pt-6 px-8 sticky top-0 z-50 pointer-events-none gap-3">
           <div 
             style={{ 
-              background: "rgba(8, 7, 6, 0.72)", 
+              background: "rgba(8, 7, 6, 0.78)", 
               borderColor: "rgba(255, 145, 40, 0.20)",
               backdropFilter: "blur(22px)",
               boxShadow: "0 15px 50px rgba(0, 0, 0, 0.45)",
@@ -97,7 +112,10 @@ export default function App() {
             className="w-full max-w-7xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 pointer-events-auto border px-8 py-3.5"
           >
             <FloatingNav currentPath={currentPath} navigate={navigate} />
-            <SystemStatusBar />
+            <div className="flex flex-wrap items-center gap-4">
+              <GlobalDataBadge />
+              <SystemStatusBar />
+            </div>
           </div>
         </header>
 
@@ -109,3 +127,4 @@ export default function App() {
     </div>
   );
 }
+
