@@ -16,7 +16,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ currentPath, navigat
   const { city, locality, source, setShowOnboardingModal } = useLocationStore();
 
   return (
-    <header className="w-full flex items-center justify-center pt-3 md:pt-4 px-2 sm:px-4 md:px-6 sticky top-0 z-50 pointer-events-none">
+    <header className="w-full flex items-center justify-center pt-2 sm:pt-3 px-2 sm:px-3 md:px-4 sticky top-0 z-50 pointer-events-none">
       <div 
         style={{
           background: "linear-gradient(180deg, rgba(14, 11, 9, 0.92), rgba(8, 7, 6, 0.96))",
@@ -25,25 +25,25 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ currentPath, navigat
           boxShadow: "0 12px 45px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
           borderRadius: "16px"
         }}
-        className="w-full pointer-events-auto border px-3 xl:px-4 h-[70px] md:h-[74px] grid grid-cols-[auto_1fr_auto] lg:grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 xl:gap-3 relative"
+        className="w-full max-w-full pointer-events-auto border px-2.5 sm:px-3 xl:px-4 h-[68px] md:h-[72px] flex items-center justify-between gap-1.5 xl:gap-2.5 relative box-border overflow-hidden"
       >
-        {/* ZONE A: BRAND (Column 1) */}
+        {/* ZONE A: BRAND */}
         <div className="flex items-center shrink-0">
           <BrandBlock onNavigate={navigate} />
         </div>
 
-        {/* ZONE B: PRIMARY NAVIGATION (Column 2 - Desktop >= 1024px) */}
-        <div className="hidden lg:flex items-center justify-center min-w-0 h-full w-full">
+        {/* ZONE B: PRIMARY NAVIGATION (Desktop >= 1024px) */}
+        <div className="hidden lg:flex items-center justify-center shrink-0 min-w-0">
           <PrimaryNavigation currentPath={currentPath} navigate={navigate} />
         </div>
 
-        {/* ZONE C: LIVE OPERATIONS & SYSTEM STATUS (Column 3 - Desktop >= 1024px) */}
-        <div className="hidden lg:flex items-center justify-end shrink-0 h-full">
+        {/* ZONE C: LIVE OPERATIONS & SYSTEM STATUS (Desktop >= 1024px) */}
+        <div className="hidden lg:flex items-center justify-end shrink-0">
           <OperationsStatus />
         </div>
 
         {/* MOBILE / TABLET HEADER CONTROLS (< 1024px) */}
-        <div className="flex lg:hidden items-center justify-end gap-2 text-xs font-mono col-span-2">
+        <div className="flex lg:hidden items-center justify-end gap-2 text-xs font-mono w-full">
           {/* Quick Location Pill */}
           <button
             onClick={() => setShowOnboardingModal(true)}
@@ -75,6 +75,7 @@ export const GlobalHeader: React.FC<GlobalHeaderProps> = ({ currentPath, navigat
     </header>
   );
 };
+
 
 
 export default GlobalHeader;

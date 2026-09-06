@@ -53,7 +53,7 @@ export const PrimaryNavigation: React.FC<PrimaryNavigationProps> = ({ currentPat
 
   return (
     <nav 
-      className="flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-1.5 shrink-0 whitespace-nowrap w-full" 
+      className="flex items-center justify-center gap-0.5 xl:gap-1 shrink-0 whitespace-nowrap" 
       aria-label="Primary Navigation"
     >
       {menuItems.map((item) => {
@@ -71,7 +71,7 @@ export const PrimaryNavigation: React.FC<PrimaryNavigationProps> = ({ currentPat
                     background: "rgba(255, 138, 0, 0.12)",
                     borderColor: "rgba(255, 138, 0, 0.45)",
                     color: "#FFF7ED",
-                    boxShadow: "0 0 14px rgba(255, 138, 0, 0.12)"
+                    boxShadow: "0 0 12px rgba(255, 138, 0, 0.12)"
                   }
                 : {
                     background: "transparent",
@@ -79,7 +79,7 @@ export const PrimaryNavigation: React.FC<PrimaryNavigationProps> = ({ currentPat
                     color: "#D6C3AE"
                   }
             }
-            className={`flex items-center gap-1 px-1.5 xl:px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] xl:text-[12px] 2xl:text-[13px] font-medium tracking-wide transition-all duration-200 whitespace-nowrap border cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF8A00] shrink-0 ${
+            className={`flex items-center gap-1 px-1.5 xl:px-2 2xl:px-2.5 py-1 rounded-lg text-[10.5px] xl:text-[11.5px] 2xl:text-[12.5px] font-medium tracking-wide transition-all duration-200 whitespace-nowrap border cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF8A00] shrink-0 ${
               isActive
                 ? "font-semibold text-[#FFF7ED]"
                 : "hover:text-[#FFF7ED] hover:bg-white/5"
@@ -98,4 +98,5 @@ export const PrimaryNavigation: React.FC<PrimaryNavigationProps> = ({ currentPat
     </nav>
   );
 };
+
 
