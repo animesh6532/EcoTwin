@@ -265,13 +265,10 @@ export default function TrafficNetwork() {
         longitude={longitude}
         accuracy={accuracy}
         loading={geoLoading}
-        error={geoError}
         permissionState={permissionStatus}
         onDetectLocation={detectBrowserLocation}
-        onClearLocation={clearLocation}
-        onJumpToSimulation={() => {}}
-        onJumpToUser={() => {}}
       />
+
 
       {/* 4. Main Operations Center Workspace (2-Column Dashboard Layout) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
