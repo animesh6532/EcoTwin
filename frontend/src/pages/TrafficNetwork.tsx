@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSimulationStore } from "../store/simulationStore";
 import { getTrafficLights, getTrafficLightDetail, setTrafficLightAction, getOverrideHistory } from "../api/trafficLights";
@@ -9,7 +9,6 @@ import { useLocationStore } from "../store/locationStore";
 
 import { TrafficHeader } from "../components/TrafficLights/TrafficHeader";
 import { LocationControlPanel } from "../components/TrafficLights/LocationControlPanel";
-import { SimulationLifecycleBanner } from "../components/TrafficLights/SimulationLifecycleBanner";
 import { NetworkKpiCards } from "../components/TrafficLights/NetworkKpiCards";
 import { JunctionList } from "../components/TrafficLights/JunctionList";
 import { JunctionDetailPanel } from "../components/TrafficLights/JunctionDetailPanel";
@@ -20,6 +19,8 @@ import { TrafficFlowPanel } from "../components/TrafficLights/TrafficFlowPanel";
 import { OverrideHistoryTable } from "../components/TrafficLights/OverrideHistoryTable";
 import { ManualOverrideModal } from "../components/TrafficLights/ManualOverrideModal";
 import { TrafficMap } from "../components/TrafficLights/TrafficMap";
+import { LiveEventFeed, LogEvent } from "../components/TrafficLights/LiveEventFeed";
+import { SumoDiagnosticPanel } from "../components/TrafficLights/SumoDiagnosticPanel";
 import { GlassPanel } from "../components/glass/GlassPanel";
 import { GlassButton } from "../components/glass/GlassButton";
 import { AlertTriangle } from "lucide-react";
@@ -44,6 +45,10 @@ export default function TrafficNetwork() {
   });
 
   const [overrideError, setOverrideError] = useState<string | null>(null);
+  const [eventFeed, setEventFeed] = useState<LogEvent[]>([]);
+
+  const lastPhaseRef = useRef<number | null>(null);
+  const lastQueueRef = useRef<number | null>(null);
 
   // Location Store
   const {
@@ -51,11 +56,10 @@ export default function TrafficNetwork() {
     longitude,
     accuracy,
     loading: geoLoading,
-    error: geoError,
     permissionStatus,
     detectBrowserLocation,
-    clearLocation,
   } = useLocationStore();
+
 
   // Discover SUMO Junction IDs
   const { data: tlIds, isLoading: isLoadingTlList } = useQuery({
@@ -96,6 +100,43 @@ export default function TrafficNetwork() {
     return null;
   }, [selectedJunctionId, wsState.trafficLights, queriedTlDetail]);
 
+  // Track live events reactively
+  useEffect(() => {
+    if (!wsState.running) return;
+
+    const newEvents: LogEvent[] = [];
+    const nowStr = new Date().toLocaleTimeString();
+
+    if (liveJunction) {
+      if (lastPhaseRef.current !== null && lastPhaseRef.current !== liveJunction.active_phase) {
+        newEvents.push({
+          id: `phase-${Date.now()}`,
+          timestamp: nowStr,
+          junctionId: liveJunction.id,
+          type: "PHASE_CHANGE",
+          message: `Phase transition: ${liveJunction.active_phase_name || `Phase ${liveJunction.active_phase}`}`,
+          detail: `Pattern: ${liveJunction.active_phase}`,
+        });
+      }
+      lastPhaseRef.current = liveJunction.active_phase ?? 0;
+
+      if (lastQueueRef.current !== null && Math.abs(lastQueueRef.current - (liveJunction.total_queue || 0)) >= 2) {
+        newEvents.push({
+          id: `queue-${Date.now()}`,
+          timestamp: nowStr,
+          junctionId: liveJunction.id,
+          type: "QUEUE_ALERT",
+          message: `Queue update: ${liveJunction.total_queue} vehicles in line`,
+        });
+      }
+      lastQueueRef.current = liveJunction.total_queue || 0;
+    }
+
+    if (newEvents.length > 0) {
+      setEventFeed((prev) => [...newEvents, ...prev].slice(0, 20));
+    }
+  }, [liveJunction?.active_phase, liveJunction?.total_queue, wsState.running]);
+
   // Full junction array for list view
   const junctionList: TrafficLight[] = React.useMemo(() => {
     if (wsState.trafficLights && wsState.trafficLights.length > 0) {
@@ -133,6 +174,16 @@ export default function TrafficNetwork() {
     onSuccess: (data) => {
       wsState.setSimulationStatus({ controller: data.active_controller });
       toast(`Controller successfully set to ${data.active_controller.toUpperCase()}`, "success");
+      setEventFeed((prev) => [
+        {
+          id: `ctrl-${Date.now()}`,
+          timestamp: new Date().toLocaleTimeString(),
+          junctionId: selectedJunctionId || "center",
+          type: "PPO_ACTION",
+          message: `Controller mode changed to ${data.active_controller.toUpperCase()}`,
+        },
+        ...prev,
+      ]);
     },
     onError: (err: any) => {
       toast(err.message || "Failed to switch controller mode", "error");
@@ -188,36 +239,16 @@ export default function TrafficNetwork() {
   const totalQueue = junctionList.reduce((acc, j) => acc + (j.total_queue || 0), 0);
 
   return (
-    <div className="space-y-8 animate-fade-in text-text-cream pb-12">
-      {/* 1. Header */}
+    <div className="space-y-4 animate-fade-in text-text-cream pb-12">
+      {/* 1. Page Header (Section 1) */}
       <TrafficHeader
         controllerMode={wsState.controller}
-        simulationStatus={wsState.simulationStatus}
+        simulationStatus={wsState.running ? "ACTIVE RUN" : "IDLE"}
         isWsConnected={wsState.connectionState === "connected"}
         systemHealth={systemHealth}
       />
 
-      {/* 2. Real Location Detection & Architectural Distinction Panel */}
-      <LocationControlPanel
-        latitude={latitude}
-        longitude={longitude}
-        accuracy={accuracy}
-        loading={geoLoading}
-        error={geoError}
-        permissionState={permissionStatus}
-        onDetectLocation={detectBrowserLocation}
-        onClearLocation={clearLocation}
-        onJumpToUser={() => {}}
-        onJumpToSimulation={() => {}}
-      />
-
-      {/* 3. Explicit Simulation Lifecycle Banner */}
-      <SimulationLifecycleBanner
-        simulationStatus={wsState.simulationStatus}
-        simulationTime={wsState.simulationTime}
-      />
-
-      {/* 4. Live Network Summary KPIs */}
+      {/* 2. Live Operations Strip (Section 2) */}
       <NetworkKpiCards
         isRunning={wsState.running}
         activeVehicles={wsState.vehicleCount}
@@ -227,10 +258,22 @@ export default function TrafficNetwork() {
         co2Rate={wsState.co2 || wsState.metrics.total_co2}
       />
 
-      {/* 5. Main Dashboard Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Column: Junction List & Controller Panel */}
-        <div className="lg:col-span-1 space-y-6">
+      {/* 3. Location + Network Context Bar (Section 3) */}
+      <LocationControlPanel
+        latitude={latitude}
+        longitude={longitude}
+        accuracy={accuracy}
+        loading={geoLoading}
+        permissionState={permissionStatus}
+        onDetectLocation={detectBrowserLocation}
+      />
+
+
+      {/* 4. Main Operations Center Workspace (2-Column Dashboard Layout) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left Column: Junction Control Console (5 cols ~38%) */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* Discovered Junction Selector (Section 6) */}
           <JunctionList
             junctions={junctionList}
             selectedJunctionId={selectedJunctionId}
@@ -240,7 +283,18 @@ export default function TrafficNetwork() {
             controllerMode={wsState.controller}
           />
 
-          <GlassPanel className="p-5">
+          {/* Real-time Intersection Signal Heads (Section 7) */}
+          <GlassPanel className="p-4">
+            <SignalStateVisualizer junction={liveJunction} />
+          </GlassPanel>
+
+          {/* 4-Directional Approach Traffic Flow Breakdown (Section 8) */}
+          <GlassPanel className="p-4">
+            <TrafficFlowPanel approaches={liveJunction?.approaches} isRunning={wsState.running} />
+          </GlassPanel>
+
+          {/* Intelligent RL Controller Decision Panel (Section 10) */}
+          <GlassPanel className="p-4">
             <ControllerPanel
               currentController={wsState.controller}
               ppoStatusStr={wsState.ppoStatusStr}
@@ -253,9 +307,9 @@ export default function TrafficNetwork() {
           </GlassPanel>
         </div>
 
-        {/* Right Column: Interactive Map, Inspector & Controls */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Interactive Leaflet Traffic Map */}
+        {/* Right Column: Live SUMO Map & Operational Diagnostics (7 cols ~62%) */}
+        <div className="lg:col-span-7 space-y-5">
+          {/* Interactive SUMO Traffic Map (Section 5) */}
           <TrafficMap
             userLat={latitude}
             userLng={longitude}
@@ -267,13 +321,29 @@ export default function TrafficNetwork() {
             isRunning={wsState.running}
           />
 
-          <GlassPanel className="p-6 space-y-8">
-            {/* Selected Junction Details */}
+          {/* SUMO Simulator Diagnostic Engine (Section 12) */}
+          <SumoDiagnosticPanel
+            sumoStatus={wsState.sumoStatus}
+            traciStatus={wsState.traciStatus}
+            ppoStatus={wsState.ppoStatus}
+            connectionState={wsState.connectionState}
+            simulationTime={wsState.simulationTime}
+            vehicleCount={wsState.vehicleCount}
+            isRunning={wsState.running}
+          />
+
+          {/* Live Operational Event Feed Log (Section 11) */}
+          <GlassPanel className="p-4">
+            <LiveEventFeed events={eventFeed} isRunning={wsState.running} />
+          </GlassPanel>
+
+          {/* Selected Junction Detail Inspector & Manual Override Controls */}
+          <GlassPanel className="p-5 space-y-6">
             <JunctionDetailPanel junction={liveJunction} controllerMode={wsState.controller} />
 
             {/* Manual Signal Phase Override Selector */}
             {liveJunction && (
-              <div className="pt-6 border-t border-[rgba(255,183,106,0.12)] space-y-4 font-mono">
+              <div className="pt-5 border-t border-[rgba(255,183,106,0.12)] space-y-4 font-mono">
                 <div className="flex justify-between items-center">
                   <h4 className="text-xs font-bold text-text-muted uppercase tracking-widest">
                     MANUAL SIGNAL PHASE OVERRIDE SELECTOR
@@ -285,29 +355,29 @@ export default function TrafficNetwork() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {liveJunction.phase_details && liveJunction.phase_details.length > 0 ? (
                     liveJunction.phase_details.map((phase) => {
                       const isCurrent = liveJunction.active_phase === phase.index;
                       return (
                         <div
                           key={phase.index}
-                          className={`p-4 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
+                          className={`p-3.5 rounded-xl border flex flex-col justify-between space-y-2.5 transition-all ${
                             isCurrent
-                              ? "bg-brand-orange/10 border-brand-orange/50 shadow-[0_0_20px_rgba(255,138,0,0.08)]"
+                              ? "bg-brand-orange/10 border-brand-orange/50 shadow-[0_0_15px_rgba(255,138,0,0.08)]"
                               : "bg-[#120D09]/50 border-[rgba(255,184,77,0.16)]"
                           }`}
                         >
                           <div className="space-y-1">
                             <div className="flex justify-between items-center">
-                              <span className="font-bold text-xs text-text-cream">Phase Index {phase.index}</span>
+                              <span className="font-bold text-xs text-text-cream">Phase {phase.index}</span>
                               {isCurrent && (
                                 <span className="px-2 py-0.5 bg-brand-orange/20 text-brand-orange text-[9px] font-bold rounded uppercase tracking-wide">
                                   Active Phase
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-text-pale font-sans leading-normal">{phase.name}</p>
+                            <p className="text-[11px] text-text-pale font-sans leading-snug">{phase.name}</p>
                             <span className="font-mono text-[9px] text-[#A89582] block bg-[#120D09] px-2 py-0.5 border border-white/5 rounded max-w-max">
                               State: {phase.state_pattern}
                             </span>
@@ -318,7 +388,7 @@ export default function TrafficNetwork() {
                             disabled={wsState.controller === "ppo" || isCurrent || !wsState.running}
                             variant={isCurrent ? "primary" : "secondary"}
                             size="sm"
-                            className="w-full text-[10px] font-mono mt-2"
+                            className="w-full text-[10px] font-mono mt-1"
                             title={
                               wsState.controller === "ppo"
                                 ? "Switch simulation to Baseline mode to issue manual phase overrides."
@@ -333,14 +403,14 @@ export default function TrafficNetwork() {
                       );
                     })
                   ) : (
-                    <div className="col-span-2 text-center py-6 text-xs text-text-muted border border-dashed border-white/10 rounded-xl">
+                    <div className="col-span-2 text-center py-4 text-xs text-text-muted border border-dashed border-white/10 rounded-xl">
                       No phase definitions loaded for this junction.
                     </div>
                   )}
                 </div>
 
                 {wsState.controller === "ppo" && (
-                  <div className="flex items-center gap-2 p-3 bg-brand-orange/10 border border-brand-orange/20 rounded-xl text-brand-orange text-[10px] font-mono uppercase tracking-wider">
+                  <div className="flex items-center gap-2 p-2.5 bg-brand-orange/10 border border-brand-orange/20 rounded-xl text-brand-orange text-[10px] font-mono uppercase tracking-wider">
                     <AlertTriangle className="h-4 w-4 shrink-0" />
                     <span>PPO Optimization active. Switch controller to Baseline to manually override signals.</span>
                   </div>
@@ -350,28 +420,14 @@ export default function TrafficNetwork() {
 
             {/* Signal Phase Timeline */}
             {liveJunction && (
-              <div className="pt-6 border-t border-[rgba(255,183,106,0.12)]">
+              <div className="pt-5 border-t border-[rgba(255,183,106,0.12)]">
                 <PhaseTimeline junction={liveJunction} />
-              </div>
-            )}
-
-            {/* Signal State Visualizer */}
-            {liveJunction && (
-              <div className="pt-6 border-t border-[rgba(255,183,106,0.12)]">
-                <SignalStateVisualizer junction={liveJunction} />
-              </div>
-            )}
-
-            {/* Traffic Flow & Approach Breakdown */}
-            {liveJunction && (
-              <div className="pt-6 border-t border-[rgba(255,183,106,0.12)]">
-                <TrafficFlowPanel approaches={liveJunction.approaches} isRunning={wsState.running} />
               </div>
             )}
           </GlassPanel>
 
-          {/* Manual Override Audit History Table */}
-          <GlassPanel className="p-6">
+          {/* Manual Override Audit History Log Table */}
+          <GlassPanel className="p-5">
             <OverrideHistoryTable logs={overrideHistoryLogs || []} isLoading={isLoadingHistory} />
           </GlassPanel>
         </div>
@@ -393,5 +449,6 @@ export default function TrafficNetwork() {
     </div>
   );
 }
+
 
 
