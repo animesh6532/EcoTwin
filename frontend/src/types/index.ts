@@ -204,9 +204,49 @@ export interface SystemComponentStatus {
   sumo: string;
   traci: string;
   ppo: string;
+  geocoding?: string;
+  network?: string;
 }
 
 export interface SystemHealthResponse {
   status: string;
   components: SystemComponentStatus;
 }
+
+export interface LocationState {
+  latitude: number | null;
+  longitude: number | null;
+  accuracy: number | null;
+  timestamp: number | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  locality: string | null;
+  formattedAddress: string | null;
+  permissionStatus: "granted" | "denied" | "prompt" | "unknown";
+  source: "GPS" | "MANUAL" | "DEMO" | "UNRESOLVED";
+  isDemoMode: boolean;
+  loading: boolean;
+  error: string | null;
+  nearbyRoads: string[];
+}
+
+export interface ReverseGeocodeResult {
+  city: string;
+  state: string;
+  country: string;
+  locality: string;
+  formatted_address: str | string;
+  latitude: number;
+  longitude: number;
+  nearby_roads: string[];
+}
+
+export interface DataStatusMap {
+  location: "GPS" | "MANUAL" | "DEMO" | "UNRESOLVED";
+  traffic: "LIVE" | "ESTIMATED" | "SIMULATED" | "UNAVAILABLE";
+  sumo: "RUNNING" | "PAUSED" | "OFFLINE";
+  ml: "ACTIVE" | "READY" | "NOT ACTIVE";
+  websocket: "CONNECTED" | "OFFLINE";
+}
+

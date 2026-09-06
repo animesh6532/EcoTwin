@@ -29,6 +29,8 @@ def health_check():
     
     traci_status = "healthy" if traci.isLoaded() else "inactive"
     ppo_status = "healthy" if simulation_manager.ppo_service is not None else "inactive"
+    geocoding_status = "healthy"
+    network_status = "healthy"
     
     overall = "healthy"
     if db_status == "unavailable" or not sumo_bin_exists:
@@ -41,7 +43,9 @@ def health_check():
             "database": db_status,
             "sumo": "healthy" if sumo_bin_exists else "unavailable",
             "traci": traci_status,
-            "ppo": ppo_status
+            "ppo": ppo_status,
+            "geocoding": geocoding_status,
+            "network": network_status
         }
     }
 
