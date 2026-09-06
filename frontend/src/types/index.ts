@@ -43,20 +43,82 @@ export interface EmissionsResponse {
   hotspots: string[];
 }
 
+export interface SignalPhaseDetail {
+  index: number;
+  name: string;
+  duration: number;
+  state_pattern: string;
+}
+
+export interface DirectionApproachMetrics {
+  direction: "North" | "South" | "East" | "West";
+  incoming_lanes: string[];
+  outgoing_lanes: string[];
+  vehicles_approaching: number;
+  vehicles_waiting: number;
+  queue_length: number;
+  average_speed: number;
+  estimated_delay: number;
+}
+
+export interface SignalStateMap {
+  north: "GREEN" | "YELLOW" | "RED";
+  south: "GREEN" | "YELLOW" | "RED";
+  east: "GREEN" | "YELLOW" | "RED";
+  west: "GREEN" | "YELLOW" | "RED";
+}
+
 export interface TrafficLight {
   id: string;
+  status: "ACTIVE" | "WARNING" | "CRITICAL" | "OFFLINE";
   active_phase: number;
+  active_phase_name: string;
   phases: string[];
+  phase_details: SignalPhaseDetail[];
+  remaining_sec: number;
+  elapsed_sec: number;
+  next_phase: number;
+  next_phase_name: string;
+  cycle_duration: number;
+  total_vehicles: number;
+  total_queue: number;
+  average_speed: number;
+  average_delay: number;
+  signal_state: SignalStateMap;
+  approaches: DirectionApproachMetrics[];
+  controller: string;
+  timestamp: string;
 }
 
 export interface TrafficLightState {
   id: string;
   phase: number;
+  phase_name?: string;
+  remaining_sec?: number;
+  signal_state?: SignalStateMap;
 }
 
 export interface TrafficLightActionResponse {
   success: boolean;
-  applied_action: number;
+  junction_id: string;
+  previous_phase: number;
+  applied_phase: number;
+  result: string;
+  timestamp: string;
+}
+
+export interface TrafficOverrideLog {
+  id: number;
+  timestamp: string;
+  session_id?: string | null;
+  junction_id: string;
+  previous_phase: number;
+  new_phase: number;
+  controller: string;
+  duration_sec: number;
+  result: string;
+  user_source: string;
+  error_message?: string | null;
 }
 
 export interface SimulationStatus {

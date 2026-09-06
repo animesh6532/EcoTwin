@@ -52,17 +52,13 @@ class SimulationService:
         vehicles = vehicle_service.get_all_vehicles()
         v_summary = vehicle_service.get_summary()
         
-        # Query traffic lights
+        # Query traffic lights deep details
         tls_ids = TrafficLightController.discover_tls_ids()
         traffic_lights = []
+        controller_type = simulation_manager.controller_type
         for t_id in tls_ids:
-            phase = TrafficLightController.get_current_phase(t_id)
-            # Default phases defined by SUMO logic
-            traffic_lights.append({
-                "id": t_id,
-                "active_phase": phase,
-                "phases": ["GGGggrrrrrGGGggrrrrr", "yyyyyrrrrryyyyyrrrrr", "rrrrrGGGggrrrrrGGGgg", "rrrrryyyyyrrrrryyyyy"]
-            })
+            tl_detail = TrafficLightController.get_full_detail(t_id, controller_type=controller_type)
+            traffic_lights.append(tl_detail)
             
         e_current = emission_service.get_current_metrics()
         
@@ -72,12 +68,25 @@ class SimulationService:
             {"x": cell.x, "y": cell.y, "intensity": cell.intensity, "co2": cell.co2, "vehicles": cell.vehicles}
             for cell in pollution_grid
         ]
+
+        # Calculate simulation status string
+        if not simulation_manager.running:
+            sim_status_str = "OFFLINE"
+        elif simulation_manager.step_count >= simulation_manager.max_steps:
+            sim_status_str = "FINISHED"
+        elif simulation_manager.paused:
+            sim_status_str = "PAUSED"
+        else:
+            sim_status_str = "RUNNING"
         
         # Structure payload frame
         payload = {
             "type": "simulation_state",
             "timestamp": datetime.utcnow().isoformat(),
             "simulation_time": step_number * simulation_manager.step_length,
+            "simulation_status": sim_status_str,
+            "controller": controller_type,
+            "session_id": simulation_manager.session_id,
             "vehicles": vehicles,
             "traffic_lights": traffic_lights,
             "metrics": {
@@ -86,7 +95,12 @@ class SimulationService:
                 "average_waiting_time": v_summary["average_waiting_time"],
                 "total_co2": e_current.co2
             },
-            "pollution": pollution_payload
+            "pollution": pollution_payload,
+            "ppo": {
+                "last_reward": simulation_manager.last_reward,
+                "last_latency_ms": simulation_manager.last_latency_ms,
+                "status": "ACTIVE" if controller_type == "ppo" else "READY"
+            }
         }
         
         # Dispatch to all WebSocket listeners safely on active loop

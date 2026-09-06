@@ -43,10 +43,65 @@ class EmissionsResponse(BaseModel):
     hotspots: List[str]
 
 # Traffic Lights Schemas
+class SignalPhaseDetail(BaseModel):
+    index: int
+    name: str
+    duration: float
+    state_pattern: str
+
+class DirectionApproachMetrics(BaseModel):
+    direction: str # "North", "South", "East", "West"
+    incoming_lanes: List[str]
+    outgoing_lanes: List[str]
+    vehicles_approaching: int
+    vehicles_waiting: int
+    queue_length: int
+    average_speed: float
+    estimated_delay: float
+
+class SignalStateMap(BaseModel):
+    north: str # "GREEN" | "YELLOW" | "RED"
+    south: str
+    east: str
+    west: str
+
 class TrafficLight(BaseModel):
     id: str
+    status: str # "ACTIVE" | "WARNING" | "CRITICAL" | "OFFLINE"
     active_phase: int
+    active_phase_name: str
     phases: List[str]
+    phase_details: List[SignalPhaseDetail]
+    remaining_sec: float
+    elapsed_sec: float
+    next_phase: int
+    next_phase_name: str
+    cycle_duration: float
+    total_vehicles: int
+    total_queue: int
+    average_speed: float
+    average_delay: float
+    signal_state: SignalStateMap
+    approaches: List[DirectionApproachMetrics]
+    controller: str
+    timestamp: str
+
+class TrafficOverrideCreate(BaseModel):
+    phase_index: int
+    duration_sec: Optional[float] = 30.0
+
+class TrafficOverrideLogSchema(BaseModel):
+    id: int
+    timestamp: str
+    session_id: Optional[str] = None
+    junction_id: str
+    previous_phase: int
+    new_phase: int
+    controller: str
+    duration_sec: float
+    result: str
+    user_source: str
+    error_message: Optional[str] = None
 
 # Simulation Status Schemas
 class SimulationStatus(BaseModel):
