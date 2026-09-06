@@ -8,9 +8,11 @@ import { RLStatus, ModelVersionSchema } from "../types";
 import { GlassCard } from "../components/glass/GlassCard";
 import { GlassPanel } from "../components/glass/GlassPanel";
 import { GlassStatus } from "../components/glass/GlassStatus";
+import { useLocationStore } from "../store/locationStore";
 
 export default function ReinforcementLearning() {
   const wsState = useSimulationStore();
+  const { city, locality, source, isDemoMode } = useLocationStore();
 
   // Queries
   const { data: rlStatus, isLoading: isLoadingStatus, refetch: refetchStatus } = useQuery<RLStatus, Error>({
@@ -78,7 +80,10 @@ export default function ReinforcementLearning() {
         </div>
         
         {/* Top bar status */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 font-mono text-[9px]">
+          <span className="px-2.5 py-1 rounded border bg-white/5 border-white/10 text-text-cream font-bold uppercase tracking-wider">
+            GRID: {city || locality || "Target Location"} ({source})
+          </span>
           <GlassStatus label="RL INFERENCE" status={rlStatus?.running ? "active" : "inactive"} />
           <GlassStatus label="MODEL VERSION" status={modelInfo ? `v${modelInfo.version}` : "none"} />
         </div>

@@ -6,7 +6,7 @@ import { setRLMode } from "../api/rl";
 import { getNetworkLocation } from "../api/location";
 import { TrafficLight } from "../types";
 import { toast } from "../utils/toast";
-import { useGeolocation } from "../hooks/useGeolocation";
+import { useLocationStore } from "../store/locationStore";
 
 import { TrafficHeader } from "../components/TrafficLights/TrafficHeader";
 import { LocationControlPanel } from "../components/TrafficLights/LocationControlPanel";
@@ -46,17 +46,17 @@ export default function TrafficNetwork() {
 
   const [overrideError, setOverrideError] = useState<string | null>(null);
 
-  // Real Browser Geolocation Hook
+  // Location Store
   const {
     latitude,
     longitude,
     accuracy,
     loading: geoLoading,
     error: geoError,
-    permissionState,
-    detectLocation,
+    permissionStatus,
+    detectBrowserLocation,
     clearLocation,
-  } = useGeolocation();
+  } = useLocationStore();
 
   // Fetch SUMO Network Location Boundaries & Projection Metadata
   const { data: networkLocation } = useQuery({
@@ -211,9 +211,9 @@ export default function TrafficNetwork() {
         accuracy={accuracy}
         loading={geoLoading}
         error={geoError}
-        permissionState={permissionState}
-        onDetectLocation={detectLocation}
-        clearLocation={clearLocation}
+        permissionState={permissionStatus}
+        onDetectLocation={detectBrowserLocation}
+        onClearLocation={clearLocation}
         onJumpToUser={() => {}}
         onJumpToSimulation={() => {}}
       />

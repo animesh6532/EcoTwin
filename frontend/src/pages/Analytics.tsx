@@ -15,9 +15,11 @@ import { BarChart3, AlertTriangle, ShieldCheck } from "lucide-react";
 import { GlassPanel } from "../components/glass/GlassPanel";
 import { GlassButton } from "../components/glass/GlassButton";
 import { GlassChart } from "../components/glass/GlassChart";
+import { useLocationStore } from "../store/locationStore";
 
 export default function Analytics() {
   const wsState = useSimulationStore();
+  const { city, locality, source } = useLocationStore();
   const [querySessionId, setQuerySessionId] = useState(wsState.sessionId || "");
 
   useEffect(() => {
@@ -135,10 +137,13 @@ export default function Analytics() {
       {querySessionId && (
         <div className="space-y-6">
           {/* Active session banner */}
-          <div className="p-4 rounded-[18px] border border-[rgba(255,184,77,0.16)] bg-white/5 shadow-sm flex items-center justify-between text-xs font-mono uppercase tracking-wider">
-            <div className="flex items-center gap-2 text-text-pale">
+          <div className="p-4 rounded-[18px] border border-[rgba(255,184,77,0.16)] bg-white/5 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs font-mono uppercase tracking-wider">
+            <div className="flex items-center gap-3 text-text-pale">
               <BarChart3 className="h-4.5 w-4.5 text-brand-orange" />
               <span>Analyzing Run Session: <span className="font-bold text-text-cream font-mono">{querySessionId}</span></span>
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-white/5 text-[#FF8A00] border border-[#FF8A00]/30">
+                LOC: {city || locality || "Target Area"} ({source})
+              </span>
             </div>
             
             {wsState.running && wsState.sessionId === querySessionId && (
