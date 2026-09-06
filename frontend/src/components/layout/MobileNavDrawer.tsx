@@ -163,7 +163,7 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
           {running && (
             <div className="p-3 rounded-xl bg-[#FF8A00]/10 border border-[#FF8A00]/25 text-[10px] space-y-1">
               <div className="flex justify-between font-bold">
-                <span className="text-[#FF8A00] uppercase">Active Run Session</span>
+                <span className="text-[#FF8A00] uppercase">{paused ? "PAUSED" : "ACTIVE RUN"}</span>
                 <span className="text-white">{simulationTime.toFixed(1)}s</span>
               </div>
               <div className="flex justify-between text-[#A89582]">
