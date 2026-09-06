@@ -53,7 +53,7 @@ export const PrimaryNavigation: React.FC<PrimaryNavigationProps> = ({ currentPat
 
   return (
     <nav 
-      className="flex items-center gap-1 xl:gap-1.5 overflow-hidden shrink-0" 
+      className="flex items-center justify-center gap-0.5 xl:gap-1 2xl:gap-1.5 shrink-0 whitespace-nowrap w-full" 
       aria-label="Primary Navigation"
     >
       {menuItems.map((item) => {
@@ -71,7 +71,7 @@ export const PrimaryNavigation: React.FC<PrimaryNavigationProps> = ({ currentPat
                     background: "rgba(255, 138, 0, 0.12)",
                     borderColor: "rgba(255, 138, 0, 0.45)",
                     color: "#FFF7ED",
-                    boxShadow: "0 0 16px rgba(255, 138, 0, 0.10)"
+                    boxShadow: "0 0 14px rgba(255, 138, 0, 0.12)"
                   }
                 : {
                     background: "transparent",
@@ -79,22 +79,23 @@ export const PrimaryNavigation: React.FC<PrimaryNavigationProps> = ({ currentPat
                     color: "#D6C3AE"
                   }
             }
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-medium tracking-wide transition-all duration-200 whitespace-nowrap border cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF8A00] ${
+            className={`flex items-center gap-1 px-1.5 xl:px-2 2xl:px-2.5 py-1.5 rounded-lg text-[11px] xl:text-[12px] 2xl:text-[13px] font-medium tracking-wide transition-all duration-200 whitespace-nowrap border cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#FF8A00] shrink-0 ${
               isActive
                 ? "font-semibold text-[#FFF7ED]"
                 : "hover:text-[#FFF7ED] hover:bg-white/5"
             }`}
           >
             <Icon 
-              className={`h-3.5 w-3.5 transition-colors duration-200 shrink-0 ${
+              className={`h-3 w-3 xl:h-3.5 xl:w-3.5 transition-colors duration-200 shrink-0 ${
                 isActive ? "text-[#FF8A00]" : "text-[#A89582]"
               }`} 
               strokeWidth={isActive ? 2.2 : 1.8}
             />
-            <span>{item.label}</span>
+            <span className="shrink-0">{item.label}</span>
           </button>
         );
       })}
     </nav>
   );
 };
+
