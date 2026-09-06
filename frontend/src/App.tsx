@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import FloatingNav from "./components/layout/FloatingNav";
-import SystemStatusBar from "./components/layout/SystemStatusBar";
-import GlobalDataBadge from "./components/layout/GlobalDataBadge";
+import GlobalHeader from "./components/layout/GlobalHeader";
 import LocationOnboardingModal from "./components/layout/LocationOnboardingModal";
 import Overview from "./pages/Overview";
 import Simulation from "./pages/Simulation";
@@ -99,28 +97,11 @@ export default function App() {
       <BackgroundLayer />
 
       <div className="flex-1 flex flex-col z-10 w-full relative">
-        {/* Floating Header capsule (Navbar & Global Status) */}
-        <header className="w-full flex flex-col items-center justify-center pt-6 px-8 sticky top-0 z-50 pointer-events-none gap-3">
-          <div 
-            style={{ 
-              background: "rgba(8, 7, 6, 0.78)", 
-              borderColor: "rgba(255, 145, 40, 0.20)",
-              backdropFilter: "blur(22px)",
-              boxShadow: "0 15px 50px rgba(0, 0, 0, 0.45)",
-              borderRadius: "28px"
-            }}
-            className="w-full max-w-7xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 pointer-events-auto border px-8 py-3.5"
-          >
-            <FloatingNav currentPath={currentPath} navigate={navigate} />
-            <div className="flex flex-wrap items-center gap-4">
-              <GlobalDataBadge />
-              <SystemStatusBar />
-            </div>
-          </div>
-        </header>
+        {/* Global Operations Header (Zone A: Brand, Zone B: Primary Nav, Zone C: Status & Telemetry) */}
+        <GlobalHeader currentPath={currentPath} navigate={navigate} />
 
         {/* Page Content scroll layout */}
-        <main className="flex-1 w-full max-w-7xl mx-auto px-8 py-8 relative">
+        <main className="flex-1 w-full max-w-[1720px] mx-auto px-4 md:px-8 py-6 md:py-8 relative">
           {renderActivePage()}
         </main>
       </div>
