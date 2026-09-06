@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldAlert, CheckCircle2, PauseCircle, PlayCircle, RefreshCw } from "lucide-react";
+import { ShieldAlert, CheckCircle2, PauseCircle } from "lucide-react";
 import { GlassPanel } from "../glass/GlassPanel";
 
 interface SimulationLifecycleBannerProps {

@@ -7,7 +7,8 @@ import {
   Database, 
   Layers, 
   Terminal, 
-  Radio 
+  Radio,
+  Globe
 } from "lucide-react";
 import { SystemHealthResponse } from "../types";
 import { GlassCard } from "../components/glass/GlassCard";
@@ -61,6 +62,13 @@ export default function SystemHealth() {
       description: "Aggregates Pydantic simulation schemas and exposes endpoints for control overrides.",
       status: healthData?.components?.api || (readyData ? "healthy" : "offline"),
       icon: Cpu,
+    },
+    {
+      id: "geocoding",
+      name: "OpenStreetMap Geocoder",
+      description: "Reverse geocodes GPS coordinates into localities, cities, and road corridors with memory caching.",
+      status: healthData?.components?.geocoding || "healthy",
+      icon: Globe,
     },
     {
       id: "db",

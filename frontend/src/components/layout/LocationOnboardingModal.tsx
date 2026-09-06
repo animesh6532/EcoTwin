@@ -8,9 +8,7 @@ import {
   X, 
   CheckCircle2, 
   AlertTriangle, 
-  RefreshCw, 
-  Layers, 
-  Globe
+  RefreshCw
 } from "lucide-react";
 
 export default function LocationOnboardingModal() {
@@ -19,12 +17,8 @@ export default function LocationOnboardingModal() {
     longitude,
     accuracy,
     city,
-    state,
-    country,
-    locality,
     formattedAddress,
     source,
-    isDemoMode,
     loading,
     error,
     nearbyRoads,
@@ -265,7 +259,7 @@ export default function LocationOnboardingModal() {
         )}
 
         {/* Active Resolved Location Info Card */}
-        {latitude !== null && (
+        {latitude !== null && longitude !== null && (
           <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col gap-3 relative z-10">
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <span className="text-xs font-mono font-bold text-[#39D98A] uppercase tracking-wider flex items-center gap-1.5">

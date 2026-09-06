@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigation, MapPin, Compass, ShieldAlert, CheckCircle2, RefreshCw } from "lucide-react";
+import { Navigation, MapPin, Compass, RefreshCw } from "lucide-react";
 import { GlassPanel } from "../glass/GlassPanel";
 import { GlassButton } from "../glass/GlassButton";
 

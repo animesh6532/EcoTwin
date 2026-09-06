@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { Layers, AlertTriangle, MapPin, Navigation, Car } from "lucide-react";
+import { Layers, AlertTriangle, MapPin, Navigation } from "lucide-react";
 import { TrafficLight, Vehicle } from "../../types";
 
 const CENTER_LAT = 52.5200;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, ShieldAlert, Cpu, Radio, Database, Server } from "lucide-react";
+import { Activity, Cpu, Radio, Database, Server } from "lucide-react";
 import { GlassStatus } from "../glass/GlassStatus";
 
 interface TrafficHeaderProps {
@@ -28,12 +28,7 @@ export const TrafficHeader: React.FC<TrafficHeaderProps> = ({
     return "FIXED-TIME BASELINE";
   };
 
-  const getControllerStatusType = () => {
-    if (simulationStatus === "OFFLINE" || simulationStatus === "FINISHED") return "stopped";
-    if (simulationStatus === "PAUSED") return "warning";
-    if (controllerMode === "ppo") return "running";
-    return "running";
-  };
+
 
   const getPillColor = (state: string) => {
     if (state === "healthy") return "text-eco-success bg-eco-success/10 border-eco-success/20";
@@ -105,7 +100,7 @@ export const TrafficHeader: React.FC<TrafficHeaderProps> = ({
         </div>
 
         {/* Controller Status Badge */}
-        <GlassStatus label="CONTROLLER MODE" status={getControllerLabel()} type={getControllerStatusType()} />
+        <GlassStatus label="CONTROLLER MODE" status={getControllerLabel()} />
       </div>
     </div>
   );

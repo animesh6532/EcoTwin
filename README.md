@@ -677,6 +677,9 @@ The FastAPI server hosts interactive documentation. When running, access:
 | **Optimization**| `/api/v1/rl/status` | `GET` | None | Controller toggles, rewards, latency |
 | **Optimization**| `/api/v1/rl/mode` | `POST` | `RLConfig` (controller type selection) | Switches active controller (Fixed-Time vs PPO) |
 | **Optimization**| `/api/v1/rl/model` | `GET` | None | Neural network weights version info |
+| **Location** | `/api/v1/location/reverse-geocode`| `POST` | `{"latitude": float, "longitude": float}` | OpenStreetMap reverse geocoding with caching |
+| **Location** | `/api/v1/location/resolve` | `POST` | `{"query": string}` | Address and city location resolution |
+| **Location** | `/api/v1/location/network` | `GET` | None | SUMO Network spatial bounds & lat/lon origin |
 | **Analytics** | `/api/v1/metrics/current` | `GET` | None | Snapshot of speed, delays, and emissions |
 | **Analytics** | `/api/v1/metrics/history` | `GET` | `session_id` (str) | Snapshots time-series list |
 | **Analytics** | `/api/v1/analysis/compare`| `GET` | `ppo_session` (str), `baseline_session` (str)| Comparative analysis delta data |

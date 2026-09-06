@@ -1,7 +1,6 @@
-import React from "react";
 import { useLocationStore } from "../../store/locationStore";
 import { useSimulationStore } from "../../store/simulationStore";
-import { MapPin, Navigation, Compass, AlertCircle, RefreshCw } from "lucide-react";
+import { MapPin, Compass, RefreshCw } from "lucide-react";
 
 export default function GlobalDataBadge() {
   const {
@@ -11,10 +10,8 @@ export default function GlobalDataBadge() {
     isDemoMode,
     accuracy,
     loading,
-    error,
     setShowOnboardingModal,
-    toggleDemoMode,
-    detectBrowserLocation
+    toggleDemoMode
   } = useLocationStore();
 
   const { connectionState, sumoStatus } = useSimulationStore();
@@ -86,7 +83,7 @@ export default function GlobalDataBadge() {
           TRAFFIC: <span className="text-[#FFB84D]">ESTIMATED</span>
         </span>
         <span className="px-2 py-0.5 rounded border bg-white/5 border-white/10 text-text-pale">
-          SUMO: <span className={sumoStatus === "running" ? "text-[#39D98A]" : "text-[#FFB84D]"}>{sumoStatus.toUpperCase()}</span>
+          SUMO: <span className={sumoStatus === "healthy" ? "text-[#39D98A]" : "text-[#FFB84D]"}>{String(sumoStatus).toUpperCase()}</span>
         </span>
         <span className="px-2 py-0.5 rounded border bg-white/5 border-white/10 text-text-pale">
           WS: <span className={connectionState === "connected" ? "text-[#39D98A]" : "text-text-muted"}>{connectionState.toUpperCase()}</span>
