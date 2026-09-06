@@ -11,6 +11,7 @@ export interface SimulationState {
   // Simulation control state
   running: boolean;
   paused: boolean;
+  simulationStatus: "OFFLINE" | "READY" | "RUNNING" | "PAUSED" | "FINISHED" | "ERROR";
   simulationTime: number;
   vehicleCount: number;
   controller: string; // "fixed_time" | "ppo"
@@ -26,6 +27,11 @@ export interface SimulationState {
     total_co2: number;
   };
   pollution: PollutionCell[];
+
+  // PPO RL state
+  ppoReward: number;
+  ppoLatencyMs: number;
+  ppoStatusStr: string;
 
   // Real active metrics fetched from backend endpoints
   totalVehicles: number;
@@ -49,6 +55,9 @@ export interface SimulationState {
   setSimulationStatus: (status: Partial<SimulationStatus>) => void;
   updateSimulationState: (payload: {
     simulation_time: number;
+    simulation_status?: string;
+    controller?: string;
+    session_id?: string | null;
     vehicles: Vehicle[];
     traffic_lights: TrafficLight[];
     metrics: {
@@ -58,6 +67,11 @@ export interface SimulationState {
       total_co2: number;
     };
     pollution: PollutionCell[];
+    ppo?: {
+      last_reward: number;
+      last_latency_ms: number;
+      status: string;
+    };
   }) => void;
   fetchSimulationMetrics: () => Promise<void>;
   selectVehicle: (id: string | null) => void;
@@ -71,6 +85,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   
   running: false,
   paused: false,
+  simulationStatus: "OFFLINE",
   simulationTime: 0,
   vehicleCount: 0,
   controller: "fixed_time",
@@ -85,6 +100,10 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     total_co2: 0,
   },
   pollution: [],
+
+  ppoReward: 0,
+  ppoLatencyMs: 0,
+  ppoStatusStr: "READY",
 
   // Initial real metrics
   totalVehicles: 0,
@@ -110,15 +129,22 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     vehicleCount: status.vehicle_count !== undefined ? status.vehicle_count : state.vehicleCount,
     controller: status.controller !== undefined ? status.controller : state.controller,
     sessionId: status.session_id !== undefined ? status.session_id : state.sessionId,
+    simulationStatus: !status.running ? "OFFLINE" : status.paused ? "PAUSED" : "RUNNING",
   })),
 
-  updateSimulationState: (payload) => set(() => ({
+  updateSimulationState: (payload) => set((state) => ({
     simulationTime: payload.simulation_time,
+    simulationStatus: (payload.simulation_status as any) || (state.running ? "RUNNING" : "OFFLINE"),
+    controller: payload.controller || state.controller,
+    sessionId: payload.session_id !== undefined ? payload.session_id : state.sessionId,
     vehicles: payload.vehicles,
     trafficLights: payload.traffic_lights,
     vehicleCount: payload.vehicles.length,
     metrics: payload.metrics,
     pollution: payload.pollution,
+    ppoReward: payload.ppo ? payload.ppo.last_reward : state.ppoReward,
+    ppoLatencyMs: payload.ppo ? payload.ppo.last_latency_ms : state.ppoLatencyMs,
+    ppoStatusStr: payload.ppo ? payload.ppo.status : state.ppoStatusStr,
   })),
 
   fetchSimulationMetrics: async () => {
