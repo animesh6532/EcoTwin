@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, Cpu, Radio, Database, Server, CheckCircle, AlertTriangle } from "lucide-react";
+import { Activity, Radio } from "lucide-react";
 
 interface TrafficHeaderProps {
   controllerMode: string;
@@ -65,8 +65,19 @@ export const TrafficHeader: React.FC<TrafficHeaderProps> = ({
             {controllerMode === "ppo" ? "PPO AGENT" : "FIXED-TIME"}
           </span>
         </div>
+
+        {/* WS Stream Badge */}
+        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border font-bold uppercase ${
+          isWsConnected
+            ? "text-eco-success bg-eco-success/10 border-eco-success/20"
+            : "text-brand-orange bg-brand-orange/10 border-brand-orange/20"
+        }`}>
+          <Radio className="h-3 w-3" />
+          <span>{isWsConnected ? "STREAM LIVE" : "IDLE"}</span>
+        </div>
       </div>
     </div>
   );
 };
+
 
