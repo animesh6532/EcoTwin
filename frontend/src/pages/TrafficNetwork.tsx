@@ -56,11 +56,10 @@ export default function TrafficNetwork() {
     longitude,
     accuracy,
     loading: geoLoading,
-    error: geoError,
     permissionStatus,
     detectBrowserLocation,
-    clearLocation,
   } = useLocationStore();
+
 
   // Discover SUMO Junction IDs
   const { data: tlIds, isLoading: isLoadingTlList } = useQuery({
