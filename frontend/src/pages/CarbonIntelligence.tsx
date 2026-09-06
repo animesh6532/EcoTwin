@@ -17,7 +17,7 @@ import { GlassPanel } from "../components/glass/GlassPanel";
 import { GlassMetric } from "../components/glass/GlassMetric";
 import { GlassChart } from "../components/glass/GlassChart";
 import { GlassStatus } from "../components/glass/GlassStatus";
-import { useGeolocation } from "../hooks/useGeolocation";
+import { useLocationStore } from "../store/locationStore";
 
 const CENTER_LAT = 52.5200;
 const CENTER_LNG = 13.4050;

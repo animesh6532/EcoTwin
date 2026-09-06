@@ -211,9 +211,9 @@ export default function TrafficNetwork() {
         accuracy={accuracy}
         loading={geoLoading}
         error={geoError}
-        permissionState={permissionState}
-        onDetectLocation={detectLocation}
-        clearLocation={clearLocation}
+        permissionState={permissionStatus}
+        onDetectLocation={detectBrowserLocation}
+        onClearLocation={clearLocation}
         onJumpToUser={() => {}}
         onJumpToSimulation={() => {}}
       />
