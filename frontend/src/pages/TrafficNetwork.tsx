@@ -1,314 +1,363 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSimulationStore } from "../store/simulationStore";
-import { getTrafficLights, getTrafficLightDetail, setTrafficLightAction } from "../api/trafficLights";
-import { useState } from "react";
-import { GitFork, CheckCircle, Clock, AlertTriangle, ShieldAlert, Cpu } from "lucide-react";
+import { getTrafficLights, getTrafficLightDetail, setTrafficLightAction, getOverrideHistory } from "../api/trafficLights";
+import { setRLMode } from "../api/rl";
+import { TrafficLight, TrafficOverrideLog } from "../types";
 import { toast } from "../utils/toast";
+
+import { TrafficHeader } from "../components/TrafficLights/TrafficHeader";
+import { NetworkKpiCards } from "../components/TrafficLights/NetworkKpiCards";
+import { JunctionList } from "../components/TrafficLights/JunctionList";
+import { JunctionDetailPanel } from "../components/TrafficLights/JunctionDetailPanel";
+import { PhaseTimeline } from "../components/TrafficLights/PhaseTimeline";
+import { SignalStateVisualizer } from "../components/TrafficLights/SignalStateVisualizer";
+import { ControllerPanel } from "../components/TrafficLights/ControllerPanel";
+import { TrafficFlowPanel } from "../components/TrafficLights/TrafficFlowPanel";
+import { OverrideHistoryTable } from "../components/TrafficLights/OverrideHistoryTable";
+import { ManualOverrideModal } from "../components/TrafficLights/ManualOverrideModal";
 import { GlassPanel } from "../components/glass/GlassPanel";
 import { GlassButton } from "../components/glass/GlassButton";
-import { GlassStatus } from "../components/glass/GlassStatus";
-import { GlassModal } from "../components/glass/GlassModal";
-
-interface ActionLog {
-  junctionId: string;
-  phase: number;
-  timestamp: string;
-  status: "success" | "failed";
-}
+import { ShieldAlert, AlertTriangle, Cpu } from "lucide-react";
 
 export default function TrafficNetwork() {
+  const queryClient = useQueryClient();
   const wsState = useSimulationStore();
-  const { data: tlIds, isLoading } = useQuery({
+
+  const [selectedJunctionId, setSelectedJunctionId] = useState<string | null>(null);
+  const [overrideModal, setOverrideModal] = useState<{
+    isOpen: boolean;
+    junctionId: string;
+    targetPhaseIndex: number;
+    currentPhaseIndex: number;
+    targetPhaseName?: string;
+    currentPhaseName?: string;
+  }>({
+    isOpen: false,
+    junctionId: "",
+    targetPhaseIndex: 0,
+    currentPhaseIndex: 0,
+  });
+
+  const [overrideError, setOverrideError] = useState<string | null>(null);
+
+  // Discover SUMO Junction IDs
+  const { data: tlIds, isLoading: isLoadingTlList } = useQuery({
     queryKey: ["trafficLightsList"],
     queryFn: getTrafficLights,
     enabled: wsState.running,
+    refetchInterval: wsState.running ? 5000 : false,
   });
 
-  const [selectedJunctionId, setSelectedJunctionId] = useState<string | null>(null);
-  const [confirmPhase, setConfirmPhase] = useState<{ junctionId: string; phaseIndex: number } | null>(null);
-  const [actionHistory, setActionHistory] = useState<ActionLog[]>([]);
+  // Auto-select first discovered junction if none selected
+  useEffect(() => {
+    if (tlIds && tlIds.length > 0 && !selectedJunctionId) {
+      setSelectedJunctionId(tlIds[0]);
+    }
+  }, [tlIds, selectedJunctionId]);
 
-  // Selected Junction Details query
-  const { data: tlDetail, isLoading: isLoadingDetail } = useQuery({
+  // Query audit history log
+  const { data: overrideHistoryLogs, isLoading: isLoadingHistory, refetch: refetchHistory } = useQuery({
+    queryKey: ["overrideHistoryLogs"],
+    queryFn: () => getOverrideHistory(20),
+    refetchInterval: wsState.running ? 3000 : false,
+  });
+
+  // Selected junction query detail fallback (when not streamed via WS)
+  const { data: queriedTlDetail } = useQuery({
     queryKey: ["trafficLightDetail", selectedJunctionId],
     queryFn: () => getTrafficLightDetail(selectedJunctionId!),
     enabled: !!selectedJunctionId && wsState.running,
+    refetchInterval: wsState.running ? 1000 : false,
   });
 
-  // Action mutation
-  const applyActionMutation = useMutation({
-    mutationFn: ({ junctionId, phaseIndex }: { junctionId: string; phaseIndex: number }) =>
-      setTrafficLightAction(junctionId, phaseIndex),
-    onSuccess: (_, variables) => {
-      setActionHistory((prev) => [
-        {
-          junctionId: variables.junctionId,
-          phase: variables.phaseIndex,
-          timestamp: new Date().toLocaleTimeString(),
-          status: "success",
-        },
-        ...prev,
-      ]);
-      toast(`Manual phase ${variables.phaseIndex} applied successfully to ${variables.junctionId}.`, "success");
-    },
-    onError: (err: any, variables) => {
-      setActionHistory((prev) => [
-        {
-          junctionId: variables.junctionId,
-          phase: variables.phaseIndex,
-          timestamp: new Date().toLocaleTimeString(),
-          status: "failed",
-        },
-        ...prev,
-      ]);
-      toast(err.message || "Failed to apply manual phase action.", "error");
-    },
-  });
+  // Merge live WS junction data with query fallback
+  const liveJunction: TrafficLight | null = React.useMemo(() => {
+    if (!selectedJunctionId) return null;
+    const wsMatch = wsState.trafficLights.find((t) => t.id === selectedJunctionId);
+    if (wsMatch && wsMatch.phase_details) return wsMatch;
+    if (queriedTlDetail) return queriedTlDetail;
+    return null;
+  }, [selectedJunctionId, wsState.trafficLights, queriedTlDetail]);
 
-  const handleApplyAction = (junctionId: string, phaseIndex: number) => {
-    setConfirmPhase({ junctionId, phaseIndex });
-  };
-
-  const executeAction = () => {
-    if (!confirmPhase) return;
-    applyActionMutation.mutate(confirmPhase);
-    setConfirmPhase(null);
-  };
-
-  const getPhaseDescription = (index: number) => {
-    switch (index) {
-      case 0:
-        return "North-South Green (East-West Red)";
-      case 1:
-        return "North-South Yellow transition";
-      case 2:
-        return "East-West Green (North-South Red)";
-      case 3:
-        return "East-West Yellow transition";
-      default:
-        return "Unknown Phase";
+  // Full junction array for list view
+  const junctionList: TrafficLight[] = React.useMemo(() => {
+    if (wsState.trafficLights && wsState.trafficLights.length > 0) {
+      return wsState.trafficLights;
     }
+    if (tlIds && tlIds.length > 0) {
+      return tlIds.map((id) => ({
+        id,
+        status: wsState.running ? "ACTIVE" : "OFFLINE",
+        active_phase: liveJunction?.id === id ? liveJunction.active_phase : 0,
+        active_phase_name: liveJunction?.id === id ? liveJunction.active_phase_name : "Phase 0",
+        phases: liveJunction?.id === id ? liveJunction.phases : [],
+        phase_details: liveJunction?.id === id ? liveJunction.phase_details : [],
+        remaining_sec: liveJunction?.id === id ? liveJunction.remaining_sec : 0,
+        elapsed_sec: liveJunction?.id === id ? liveJunction.elapsed_sec : 0,
+        next_phase: liveJunction?.id === id ? liveJunction.next_phase : 1,
+        next_phase_name: liveJunction?.id === id ? liveJunction.next_phase_name : "Phase 1",
+        cycle_duration: liveJunction?.id === id ? liveJunction.cycle_duration : 90,
+        total_vehicles: liveJunction?.id === id ? liveJunction.total_vehicles : 0,
+        total_queue: liveJunction?.id === id ? liveJunction.total_queue : 0,
+        average_speed: liveJunction?.id === id ? liveJunction.average_speed : 0,
+        average_delay: liveJunction?.id === id ? liveJunction.average_delay : 0,
+        signal_state: liveJunction?.id === id ? liveJunction.signal_state : { north: "RED", south: "RED", east: "RED", west: "RED" },
+        approaches: liveJunction?.id === id ? liveJunction.approaches : [],
+        controller: wsState.controller,
+        timestamp: new Date().toISOString(),
+      }));
+    }
+    return [];
+  }, [wsState.trafficLights, tlIds, liveJunction, wsState.running, wsState.controller]);
+
+  // Controller mode mutation
+  const switchControllerMutation = useMutation({
+    mutationFn: (mode: "fixed_time" | "ppo") => setRLMode({ controller_type: mode }),
+    onSuccess: (data) => {
+      wsState.setSimulationStatus({ controller: data.active_controller });
+      toast(`Controller successfully set to ${data.active_controller.toUpperCase()}`, "success");
+    },
+    onError: (err: any) => {
+      toast(err.message || "Failed to switch controller mode", "error");
+    },
+  });
+
+  // Manual Phase Action Mutation
+  const applyOverrideMutation = useMutation({
+    mutationFn: ({ junctionId, phaseIndex }: { junctionId: string; phaseIndex: number }) =>
+      setTrafficLightAction(junctionId, phaseIndex, 30),
+    onSuccess: (data) => {
+      setOverrideModal((prev) => ({ ...prev, isOpen: false }));
+      setOverrideError(null);
+      refetchHistory();
+      queryClient.invalidateQueries({ queryKey: ["trafficLightDetail"] });
+      toast(`Manual Phase ${data.applied_phase} applied to Junction ${data.junction_id}`, "success");
+    },
+    onError: (err: any) => {
+      setOverrideError(err.message || "Manual override rejected by safety validator.");
+      refetchHistory();
+    },
+  });
+
+  const handleOpenOverrideModal = (phaseIndex: number, phaseName?: string) => {
+    if (!selectedJunctionId || !liveJunction) return;
+    setOverrideError(null);
+    setOverrideModal({
+      isOpen: true,
+      junctionId: selectedJunctionId,
+      targetPhaseIndex: phaseIndex,
+      currentPhaseIndex: liveJunction.active_phase ?? 0,
+      targetPhaseName: phaseName,
+      currentPhaseName: liveJunction.active_phase_name,
+    });
   };
+
+  const handleExecuteOverride = () => {
+    applyOverrideMutation.mutate({
+      junctionId: overrideModal.junctionId,
+      phaseIndex: overrideModal.targetPhaseIndex,
+    });
+  };
+
+  // Derive system health
+  const systemHealth = {
+    api: wsState.connectionState === "connected" ? "healthy" : "active",
+    sumo: wsState.sumoStatus,
+    traci: wsState.traciStatus,
+    ppo: wsState.ppoStatus,
+  };
+
+  // Calculate live network totals
+  const totalQueue = junctionList.reduce((acc, j) => acc + (j.total_queue || 0), 0);
 
   return (
-    <div className="space-y-8 animate-fade-in text-text-cream">
-      {/* Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight uppercase font-sans">Traffic Network Control</h1>
-          <p className="text-text-pale text-xs mt-1">
-            Perform manual signal override and monitor microscopic phase configuration states.
+    <div className="space-y-8 animate-fade-in text-text-cream pb-12">
+      {/* 1. Header */}
+      <TrafficHeader
+        controllerMode={wsState.controller}
+        simulationStatus={wsState.simulationStatus}
+        isWsConnected={wsState.connectionState === "connected"}
+        systemHealth={systemHealth}
+      />
+
+      {/* 2. Live Network Summary KPIs */}
+      <NetworkKpiCards
+        isRunning={wsState.running}
+        activeVehicles={wsState.vehicleCount}
+        averageSpeed={wsState.averageSpeed || wsState.metrics.average_speed}
+        totalQueue={totalQueue}
+        averageWaitingTime={wsState.averageWaitingTime || wsState.metrics.average_waiting_time}
+        co2Rate={wsState.co2 || wsState.metrics.total_co2}
+      />
+
+      {/* Simulation Offline Banner */}
+      {!wsState.running && (
+        <GlassPanel className="p-6 text-center space-y-3 max-w-2xl mx-auto border-brand-orange/30">
+          <ShieldAlert className="h-10 w-10 text-brand-orange mx-auto animate-pulse" />
+          <h3 className="font-bold text-lg font-mono uppercase text-text-cream">
+            SIMULATION ENVIRONMENT OFFLINE
+          </h3>
+          <p className="text-xs text-text-pale max-w-lg mx-auto leading-relaxed">
+            Traffic lights and junction phase overrides require an active SUMO simulation session. Click "Start Simulation" on the main controls to initiate TraCI network stream.
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <GlassStatus label="CONTROLLER MODE" status={wsState.controller === "ppo" ? "PPO RL ACTIVE" : "FIXED-TIME CYCLE"} />
-        </div>
-      </div>
+        </GlassPanel>
+      )}
 
-      {!wsState.running ? (
-        <div className="space-y-8 animate-fade-in flex flex-col items-center justify-center min-h-[calc(100vh-16rem)]">
-          <GlassPanel className="max-w-xl w-full text-center space-y-6">
-            <ShieldAlert className="h-10 w-10 text-brand-orange mx-auto animate-pulse" />
-            <div className="space-y-2">
-              <h3 className="font-bold text-xl text-text-cream tracking-widest uppercase font-mono">
-                SIMULATION INACTIVE
-              </h3>
-              <p className="text-text-pale text-xs leading-relaxed max-w-sm mx-auto">
-                Discovered traffic light junctions are only available while the SUMO environment is actively running. Start a SUMO session to inspect control systems.
-              </p>
-            </div>
-          </GlassPanel>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Discovered Junctions list */}
-          <GlassPanel className="p-6">
-            <h3 className="text-xs font-bold font-mono uppercase tracking-widest text-text-muted mb-4 border-b border-[rgba(255,183,106,0.12)] pb-3">Discovered Junctions</h3>
-            
-            {isLoading ? (
-              <div className="space-y-2">
-                <div className="h-12 bg-[#050505]/45 rounded-lg shimmer animate-pulse" />
-                <div className="h-12 bg-[#050505]/45 rounded-lg shimmer animate-pulse" />
-              </div>
-            ) : tlIds && tlIds.length > 0 ? (
-              <div className="space-y-2">
-                {tlIds.map((id) => (
-                  <button
-                    key={id}
-                    onClick={() => setSelectedJunctionId(id)}
-                    className={`w-full text-left p-3.5 rounded-xl border transition-all text-xs font-mono font-bold flex justify-between items-center ${
-                      selectedJunctionId === id
-                        ? "bg-brand-orange/10 border-brand-orange text-white"
-                        : "bg-[#120D09]/45 border-[rgba(255,184,77,0.16)] text-[#FFF7ED] hover:bg-white/5"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <GitFork className="h-4 w-4 text-text-muted" />
-                      <span>ID: {id}</span>
-                    </div>
-                    <span className={`text-[8px] px-1.5 py-0.5 rounded font-mono font-bold uppercase ${wsState.controller === "ppo" ? "text-brand-orange bg-brand-orange/10" : "text-text-muted bg-white/5"}`}>
-                      {wsState.controller === "ppo" ? "PPO" : "FIXED"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center text-xs text-text-muted border border-dashed border-[rgba(255,183,106,0.12)] rounded-lg font-mono">
-                No active traffic light junctions found.
-              </div>
-            )}
-          </GlassPanel>
+      {/* 3. Main Dashboard 2-Column Operational Grid */}
+      {wsState.running && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          {/* Left Column: Junction Network Selector */}
+          <div className="lg:col-span-1 space-y-6">
+            <JunctionList
+              junctions={junctionList}
+              selectedJunctionId={selectedJunctionId}
+              onSelectJunction={setSelectedJunctionId}
+              isLoading={isLoadingTlList}
+              isRunning={wsState.running}
+              controllerMode={wsState.controller}
+            />
 
-          {/* Selected Junction Details (Inspector & overrides) */}
-          <GlassPanel className="lg:col-span-2 p-6 space-y-6">
-            {selectedJunctionId ? (
-              <>
-                <div className="flex justify-between items-start pb-4 border-b border-[rgba(255,183,106,0.12)]">
-                  <div>
-                    <h3 className="font-bold text-text-cream text-base font-sans tracking-wide">Junction Override: {selectedJunctionId}</h3>
-                    <p className="text-xs text-text-pale mt-0.5">Control configurations and phase selector</p>
+            <GlassPanel className="p-5">
+              <ControllerPanel
+                currentController={wsState.controller}
+                ppoStatusStr={wsState.ppoStatusStr}
+                ppoReward={wsState.ppoReward}
+                ppoLatencyMs={wsState.ppoLatencyMs}
+                onSwitchController={(mode) => switchControllerMutation.mutate(mode)}
+                isSwitching={switchControllerMutation.isPending}
+                isRunning={wsState.running}
+              />
+            </GlassPanel>
+          </div>
+
+          {/* Right Column: Dynamic Junction Inspector & Controls */}
+          <div className="lg:col-span-2 space-y-8">
+            <GlassPanel className="p-6 space-y-8">
+              {/* Selected Junction Details */}
+              <JunctionDetailPanel junction={liveJunction} controllerMode={wsState.controller} />
+
+              {/* Manual Signal Phase Override Selector */}
+              {liveJunction && (
+                <div className="pt-6 border-t border-[rgba(255,183,106,0.12)] space-y-4 font-mono">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-xs font-bold text-text-muted uppercase tracking-widest">
+                      MANUAL SIGNAL PHASE OVERRIDE SELECTOR
+                    </h4>
+                    {wsState.controller === "ppo" && (
+                      <span className="text-[9px] px-2 py-0.5 rounded bg-brand-orange/10 text-brand-orange border border-brand-orange/20 font-bold uppercase">
+                        RL Override Lock Active
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] text-text-pale font-mono tracking-wider">
-                    <Cpu className="h-4 w-4 text-text-muted" />
-                    <span>MODE: {wsState.controller === "ppo" ? "PPO RL OPTIMIZATION" : "FIXED-TIME BASELINE"}</span>
-                  </div>
-                </div>
 
-                {isLoadingDetail ? (
-                  <div className="h-40 bg-[#120D09]/45 rounded-xl shimmer animate-pulse" />
-                ) : tlDetail ? (
-                  <div className="space-y-6">
-                    {/* Phase Override selection */}
-                    <div className="space-y-3">
-                      <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">Select Manual Phase State</h4>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {tlDetail.phases.map((pattern, index) => {
-                          const isCurrent = tlDetail.active_phase === index;
-                          return (
-                            <div 
-                              key={index} 
-                              className={`p-4 rounded-xl border flex flex-col justify-between h-36 font-mono ${
-                                isCurrent 
-                                  ? "bg-brand-orange/5 border-brand-orange/45 shadow-[0_0_15px_rgba(255,138,0,0.06)]" 
-                                  : "bg-[#120D09]/45 border-[rgba(255,184,77,0.16)]"
-                              }`}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {liveJunction.phase_details && liveJunction.phase_details.length > 0 ? (
+                      liveJunction.phase_details.map((phase) => {
+                        const isCurrent = liveJunction.active_phase === phase.index;
+                        return (
+                          <div
+                            key={phase.index}
+                            className={`p-4 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
+                              isCurrent
+                                ? "bg-brand-orange/10 border-brand-orange/50 shadow-[0_0_20px_rgba(255,138,0,0.08)]"
+                                : "bg-[#120D09]/50 border-[rgba(255,184,77,0.16)]"
+                            }`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-xs text-text-cream">Phase Index {phase.index}</span>
+                                {isCurrent && (
+                                  <span className="px-2 py-0.5 bg-brand-orange/20 text-brand-orange text-[9px] font-bold rounded uppercase tracking-wide">
+                                    Active Phase
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-text-pale font-sans leading-normal">{phase.name}</p>
+                              <span className="font-mono text-[9px] text-[#A89582] block bg-[#120D09] px-2 py-0.5 border border-white/5 rounded max-w-max">
+                                State: {phase.state_pattern}
+                              </span>
+                            </div>
+
+                            <GlassButton
+                              onClick={() => handleOpenOverrideModal(phase.index, phase.name)}
+                              disabled={wsState.controller === "ppo" || isCurrent}
+                              variant={isCurrent ? "primary" : "secondary"}
+                              size="sm"
+                              className="w-full text-[10px] font-mono mt-2"
+                              title={
+                                wsState.controller === "ppo"
+                                  ? "Switch simulation to Baseline mode to issue manual phase overrides."
+                                  : isCurrent
+                                  ? "Junction is currently active on this phase."
+                                  : ""
+                              }
                             >
-                              <div>
-                                <div className="flex justify-between items-center">
-                                  <span className="font-bold text-text-cream text-xs">Phase Index {index}</span>
-                                  {isCurrent && (
-                                    <span className="px-2 py-0.5 bg-brand-orange/15 text-brand-orange text-[9px] font-bold rounded uppercase tracking-wide">
-                                      Active
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-[11px] text-text-pale mt-1.5 font-sans leading-normal">{getPhaseDescription(index)}</p>
-                                <span className="font-mono text-[9px] text-[#A89582] block mt-2 bg-[#120D09] px-2 py-0.5 border border-white/5 rounded max-w-max">
-                                  Pattern: {pattern}
-                                </span>
-                              </div>
-
-                              <GlassButton
-                                onClick={() => handleApplyAction(selectedJunctionId, index)}
-                                disabled={wsState.controller === "ppo"}
-                                variant={isCurrent ? "primary" : "secondary"}
-                                size="sm"
-                                className="w-full mt-3 font-mono text-[10px]"
-                                title={wsState.controller === "ppo" ? "Disable PPO controller mode to override manually." : ""}
-                              >
-                                Override Phase
-                              </GlassButton>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      
-                      {wsState.controller === "ppo" && (
-                        <div className="flex items-center gap-2 p-3 bg-brand-orange/10 border border-brand-orange/20 rounded-xl text-brand-orange text-[10px] font-mono uppercase tracking-wider">
-                          <AlertTriangle className="h-4 w-4 shrink-0" />
-                          <span>PPO Optimization active. Switch simulation to Baseline to manually override signals.</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Applied overrides logs */}
-                    <div className="pt-6 border-t border-[rgba(255,183,106,0.12)] space-y-3">
-                      <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">Manual Override History</h4>
-                      
-                      <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                        {actionHistory.length > 0 ? (
-                          actionHistory.map((log, idx) => (
-                            <div key={idx} className="p-3 bg-[#120D09]/45 border border-[rgba(255,184,77,0.16)] rounded-lg flex items-center justify-between text-xs font-mono text-[#FFF7ED]">
-                              <div className="flex items-center gap-2">
-                                <CheckCircle className="h-4 w-4 text-eco-success" />
-                                <span>Phase {log.phase} applied to {log.junctionId}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-[10px] text-text-muted">
-                                <Clock className="h-3.5 w-3.5" />
-                                <span>{log.timestamp}</span>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="py-8 text-center text-xs text-text-muted border border-dashed border-[rgba(255,183,106,0.12)] rounded-lg font-mono">
-                            No override actions have been issued during this active session.
+                              {isCurrent ? "Phase Active" : "Override to Phase"}
+                            </GlassButton>
                           </div>
-                        )}
+                        );
+                      })
+                    ) : (
+                      <div className="col-span-2 text-center py-6 text-xs text-text-muted border border-dashed border-white/10 rounded-xl">
+                        No phase definitions loaded for this junction.
                       </div>
+                    )}
+                  </div>
+
+                  {wsState.controller === "ppo" && (
+                    <div className="flex items-center gap-2 p-3 bg-brand-orange/10 border border-brand-orange/20 rounded-xl text-brand-orange text-[10px] font-mono uppercase tracking-wider">
+                      <AlertTriangle className="h-4 w-4 shrink-0" />
+                      <span>PPO Optimization active. Switch controller to Baseline to manually override signals.</span>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-sm text-text-muted font-mono">
-                    Failed to fetch details for junction '{selectedJunctionId}'.
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="h-64 flex flex-col items-center justify-center text-text-muted text-xs border border-dashed border-[rgba(255,183,106,0.12)] rounded-xl space-y-2">
-                <GitFork className="h-8 w-8 text-text-dim/40 mb-2 animate-pulse" />
-                <span className="font-sans">Select a discovered traffic light junction on the left to override phases.</span>
-              </div>
-            )}
-          </GlassPanel>
+                  )}
+                </div>
+              )}
+
+              {/* Signal Phase Timeline */}
+              {liveJunction && (
+                <div className="pt-6 border-t border-[rgba(255,183,106,0.12)]">
+                  <PhaseTimeline junction={liveJunction} />
+                </div>
+              )}
+
+              {/* Signal State Visualizer */}
+              {liveJunction && (
+                <div className="pt-6 border-t border-[rgba(255,183,106,0.12)]">
+                  <SignalStateVisualizer junction={liveJunction} />
+                </div>
+              )}
+
+              {/* Traffic Flow & Approach Breakdown */}
+              {liveJunction && (
+                <div className="pt-6 border-t border-[rgba(255,183,106,0.12)]">
+                  <TrafficFlowPanel approaches={liveJunction.approaches} isRunning={wsState.running} />
+                </div>
+              )}
+            </GlassPanel>
+
+            {/* Manual Override Audit History Table */}
+            <GlassPanel className="p-6">
+              <OverrideHistoryTable logs={overrideHistoryLogs || []} isLoading={isLoadingHistory} />
+            </GlassPanel>
+          </div>
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      <GlassModal
-        isOpen={!!confirmPhase}
-        onClose={() => setConfirmPhase(null)}
-        title="Confirm Signal Override"
-      >
-        {confirmPhase && (
-          <div className="space-y-4">
-            <p>
-              Are you sure you want to override the phase state of junction{" "}
-              <span className="font-bold text-brand-orange">{confirmPhase.junctionId}</span> to{" "}
-              <span className="font-bold text-brand-orange">Phase {confirmPhase.phaseIndex}</span>?
-            </p>
-            <div className="flex justify-end gap-3 pt-2">
-              <GlassButton
-                onClick={() => setConfirmPhase(null)}
-                variant="ghost"
-                size="sm"
-                className="font-mono"
-              >
-                Cancel
-              </GlassButton>
-              <GlassButton
-                onClick={executeAction}
-                variant="primary"
-                size="sm"
-                className="font-mono"
-              >
-                Confirm override
-              </GlassButton>
-            </div>
-          </div>
-        )}
-      </GlassModal>
+      {/* Confirmation Modal for High-Risk Manual Override */}
+      <ManualOverrideModal
+        isOpen={overrideModal.isOpen}
+        onClose={() => setOverrideModal((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={handleExecuteOverride}
+        junctionId={overrideModal.junctionId}
+        targetPhaseIndex={overrideModal.targetPhaseIndex}
+        currentPhaseIndex={overrideModal.currentPhaseIndex}
+        targetPhaseName={overrideModal.targetPhaseName}
+        currentPhaseName={overrideModal.currentPhaseName}
+        isPending={applyOverrideMutation.isPending}
+        errorMessage={overrideError}
+      />
     </div>
   );
 }
+
