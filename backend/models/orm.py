@@ -44,3 +44,19 @@ class ModelVersion(Base):
     training_date = Column(String(50), nullable=False)
     feature_version = Column(String(50), nullable=False)
     status = Column(String(20), default="active") # "active", "inactive"
+
+class TrafficOverrideLog(Base):
+    __tablename__ = "traffic_override_logs"
+    
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    timestamp = Column(DateTime, server_default=func.now(), nullable=False)
+    session_id = Column(String(36), nullable=True, index=True)
+    junction_id = Column(String(50), nullable=False, index=True)
+    previous_phase = Column(Integer, nullable=False)
+    new_phase = Column(Integer, nullable=False)
+    controller = Column(String(50), nullable=False)
+    duration_sec = Column(Float, nullable=False, default=0.0)
+    result = Column(String(20), nullable=False, default="SUCCESS")
+    user_source = Column(String(50), nullable=False, default="MANUAL_OPERATOR")
+    error_message = Column(Text, nullable=True)
+
